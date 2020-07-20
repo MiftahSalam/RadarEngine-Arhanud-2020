@@ -1,0 +1,9 @@
+version: 1.0.{build}
+build:
+  verbosity: minimal
+  os: centos7
+  environment: Qt5.9
+  3rdparty : crypto log4qt ver 1.4
+
+branches:
+  - master

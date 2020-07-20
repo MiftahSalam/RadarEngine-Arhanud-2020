@@ -1,0 +1,18 @@
+language: cpp
+
+sudo: required
+
+dist: centos7
+
+compiler:
+- gcc
+
+os:
+- linux
+
+env:
+- QT_VERSION=qt59
+
+3rdparty:
+  - log4qt ver 1.4
+  - crypto
