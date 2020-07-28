@@ -2,7 +2,7 @@
 
 #include <QUdpSocket>
 
-using namespace RadarEngineARMD;
+using namespace RadarEngineARND;
 
 struct RadarReport_01C4_18
 {  // 01 C4 with length 18

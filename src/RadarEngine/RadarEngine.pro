@@ -9,12 +9,12 @@ QT       += widgets network opengl
 include(../../build.pri)
 include(RadarEngine.pri)
 
-contains(DEFINES, RADAR_ENGINE_ARMED_STATIC) {
+contains(DEFINES, RADAR_ENGINE_ARND_STATIC) {
     message(Building static radar-engine...)
     CONFIG += staticlib
 }
 
-TARGET = RadarEngine-armd
+TARGET = RadarEngine-arnd
 TEMPLATE = lib
 DESTDIR = ../bin
 DEFINES += RADAR_ENGINE_LIBRARY

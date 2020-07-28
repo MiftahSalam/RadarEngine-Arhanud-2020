@@ -7,11 +7,11 @@
 
 #include "radarengine_global.h"
 
-namespace RadarEngineARMD {
+namespace RadarEngineARND {
 
 class RadarEngine;
 
-class RADAR_ENGINE_EXPORT RadarReceive : public QThread
+class RADAR_ENGINE_ARND_EXPORT RadarReceive : public QThread
 {
     Q_OBJECT
 public:
