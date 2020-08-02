@@ -6,6 +6,26 @@
 
 using namespace RadarEngineARND;
 
+RadarState state_radar;
+ReportFilter filter;
+ReportAlign align;
+ReportScanSignal scanSignal;
+RadarSettings radar_settings;
+ARPASettings arpa_settings;
+IFFSettings iff_settings;
+ADSBSettings adsb_settings;
+MqttSettings mqtt_settings;
+MapSettings map_settings;
+ProxySetting proxy_settings;
+TrailSettings trail_settings;
+MTISettings mti_settings;
+QDateTime cur_elapsed_time;
+double currentOwnShipLat;
+double currentOwnShipLon;
+double currentHeading;
+bool gps_auto;
+bool hdg_auto;
+
 GLubyte old_strength_info[2048][512];
 GLubyte new_strength_info[2048][512];
 
@@ -23,7 +43,8 @@ enum {
     TRAIL_ARRAY_SIZE
 };
 
-RadarEngine::RadarEngine()
+RadarEngine::RadarEngine(QObject *parent):
+    QObject(parent)
 {
     qDebug()<<Q_FUNC_INFO;
 

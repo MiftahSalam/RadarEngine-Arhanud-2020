@@ -8,8 +8,6 @@
 
 namespace RadarEngineARND {
 
-int target_id_count = 0;
-
 class RadarEngine;
 
 class RadarArpa : public QObject

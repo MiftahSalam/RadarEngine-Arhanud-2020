@@ -21,13 +21,13 @@ RadarArpa::RadarArpa(QObject *parent,RadarEngine *ri) :
 
 void RadarArpa::RefreshArpaTargets()
 {
-    m_range = range_meters;
     //    qDebug()<<Q_FUNC_INFO<<"range_meters"<<range_meters;
 
     for (int i = 0; i < m_number_of_targets; i++)
     {
         if (m_target[i])
         {
+            m_target[i]->m_range = range_meters;
             if (m_target[i]->m_status == LOST)
             {
                 qDebug()<<Q_FUNC_INFO<<"lost target "<<i;
@@ -310,7 +310,6 @@ void RadarArpa::AcquireOrDeleteMarpaTarget(Position target_pos, int status)
 }
 int RadarArpa::AcquireNewARPATarget(Polar pol, int status)
 {
-    m_range = range_meters;
     // acquires new target from mouse click position
     // no contour taken yet
     // target status status, normally 0, if dummy target to delete a target -2
@@ -320,7 +319,7 @@ int RadarArpa::AcquireNewARPATarget(Polar pol, int status)
     Position target_pos;
     own_pos.lat = currentOwnShipLat;
     own_pos.lon =currentOwnShipLon;
-    target_pos = Polar2Pos(pol, own_pos, m_range);
+    target_pos = Polar2Pos(pol, own_pos, range_meters);
     // make new target or re-use an existing one with status == lost
     qDebug()<<Q_FUNC_INFO<<"range_meters"<<range_meters;
     int i;

@@ -236,7 +236,7 @@ void RadarReceive::run()
             }
 
         }
-
+        msleep(5);
     }
     qDebug()<<Q_FUNC_INFO<<"radar receive terminated";
 

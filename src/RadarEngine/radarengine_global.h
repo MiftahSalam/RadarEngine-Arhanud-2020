@@ -300,11 +300,18 @@ extern ReportAlign align;
 extern ReportScanSignal scanSignal;
 extern RadarSettings radar_settings;
 extern ARPASettings arpa_settings;
+extern IFFSettings iff_settings;
+extern ADSBSettings adsb_settings;
+extern MqttSettings mqtt_settings;
+extern MapSettings map_settings;
+extern ProxySetting proxy_settings;
 extern TrailSettings trail_settings;
 extern MTISettings mti_settings;
 extern QDateTime cur_elapsed_time;
 extern double currentOwnShipLat;
 extern double currentOwnShipLon;
 extern double currentHeading;
+extern bool gps_auto;
+extern bool hdg_auto;
 
 #endif // RADARENGINE_GLOBAL_H

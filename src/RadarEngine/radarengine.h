@@ -19,7 +19,7 @@ class RADAR_ENGINE_ARND_EXPORT RadarEngine : public QObject
 {
     Q_OBJECT
 public:
-    RadarEngine();
+    RadarEngine(QObject *parent=nullptr);
 
     struct line_history
     {
