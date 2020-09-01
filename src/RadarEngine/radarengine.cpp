@@ -86,6 +86,11 @@ RadarEngine::RadarEngine(QObject *parent):
     timer->start(1000);
 }
 
+RadarEngine::~RadarEngine()
+{
+    Crypto::setProtect(cur_elapsed_time);
+}
+
 void RadarEngine::timerTimeout()
 {
     quint64 now = QDateTime::currentMSecsSinceEpoch();
