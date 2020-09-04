@@ -20,19 +20,19 @@ struct RadarReport_02C4_99
 {     // length 99
     quint8 what;                    // 0   0x02
     quint8 command;                 // 1 0xC4
-    quint32 range;                  //  2-3   0x06 0x09
-    quint16 field4;                 // 6-7    0
-    quint32 field8;                 // 8-11   1
+    quint8 range[3];                  //  2-4   0x06 0x09
+    quint8 field4[3];                 // 5-7    0
+    quint8 field8[4];                 // 8-11   1
     quint8 gain;                    // 12
     quint8 field13;                 // 13  ==1 for sea auto
     quint8 field14;                 // 14
-    quint16 field15;                // 15-16
-    quint32 sea;                    // 17-20   sea state (17)
+    quint8 field15[2];                // 15-16
+    quint8 sea[4];                    // 17-20   sea state (17)
     quint8 field21;                 // 21
     quint8 rain;                    // 22   rain clutter
     quint8 field23;                 // 23
-    quint32 field24;                // 24-27
-    quint32 field28;                // 28-31
+    quint8 field24[4];                // 24-27
+    quint8 field28[4];                // 28-31
     quint8 field32;                 // 32
     quint8 field33;                 // 33
     quint8 interference_rejection;  // 34
@@ -61,10 +61,10 @@ struct RadarReport_04C4_66
 {  // 04 C4 with length 66
     quint8 what;                 // 0   0x04
     quint8 command;              // 1   0xC4
-    quint32 field2;              // 2-5
-    quint16 bearing_alignment;   // 6-7
-    quint16 field8;              // 8-9
-    quint16 antenna_height;      // 10-11
+    quint8 field2[4];              // 2-5
+    quint8 bearing_alignment[2];   // 6-7
+    quint8 field8[2];              // 8-9
+    quint8 antenna_height[2];      // 10-11
 };
 
 struct RadarReport_08C4_18
@@ -79,7 +79,7 @@ struct RadarReport_08C4_18
     quint8 field7;                        // 7
     quint8 field8;                        // 8
     quint8 side_lobe_suppression;         // 9
-    quint16 field10;                      // 10-11
+    quint8 field10[2];                      // 10-11
     quint8 noise_rejection;               // 12    noise rejection
     quint8 target_sep;                    // 13
 };
@@ -243,7 +243,7 @@ void RadarReceive::run()
 }
 void RadarReceive::processReport(QByteArray data, int len)
 {
-//    qDebug()<<Q_FUNC_INFO;
+    qDebug()<<Q_FUNC_INFO<<data.toHex();
 
     const quint8 *report =  (const quint8*)data.constData();
     if (report[1] == 0xC4)
@@ -264,7 +264,7 @@ void RadarReceive::processReport(QByteArray data, int len)
                 case 0x02:
                     emit updateReport(0,2,0);
                     break;
-                case 0x05:
+                case 0x03:
                     emit updateReport(0,3,0);
                     break;
                 default:
@@ -277,8 +277,14 @@ void RadarReceive::processReport(QByteArray data, int len)
         case (99 << 8) + 0x02:
         {  // length 99, 02 C4
             RadarReport_02C4_99 *s = (RadarReport_02C4_99 *)report;
-            if (s->field8 == 1) //auto
+
+            //gain
+            quint32 gain_mode = (s->field8[3] << 24) | (s->field8[2] << 16) | (s->field8[1] << 8) | (s->field8[0]);
+            qDebug()<<Q_FUNC_INFO<<"gain_mode"<<gain_mode<<s->gain;
+            if (gain_mode == 1) //auto
+            {
                 emit updateReport(1,0,0);
+            }
             else
             {
                 s->gain = s->gain !=0 ? s->gain : 1;
@@ -286,17 +292,25 @@ void RadarReceive::processReport(QByteArray data, int len)
             }
 
             emit updateReport(1,1,s->rain);
+
+            //sea
             if (s->field13 == 0x01) //auto
                 emit updateReport(1,2,0);
             else
             {
-                s->sea = s->sea !=0 ? s->sea : 1;
-                emit updateReport(1,2,s->sea);
+                quint32 sea = (s->sea[3] << 24) | (s->sea[2] << 16) | (s->sea[1] << 8) | (s->sea[0]);
+                sea = sea !=0 ? sea : 1;
+                emit updateReport(1,2,sea);
             }
             emit updateReport(1,3,s->target_boost);
             emit updateReport(1,4,s->interference_rejection);
             emit updateReport(1,5,s->target_expansion);
-            emit updateReport(1,6,s->range/10);
+
+            //range
+            quint32 range = (s->range[2] << 16) | (s->range[1] << 8) | (s->range[0]);
+//            range /= 16;
+            qDebug()<<Q_FUNC_INFO<<"range hex"<<QString::number(range,16);
+            emit updateReport(1,6,range);
             break;
         }
 
@@ -304,8 +318,13 @@ void RadarReceive::processReport(QByteArray data, int len)
         {  // 66 bytes starting with 04 C4
             RadarReport_04C4_66 *data = (RadarReport_04C4_66 *)report;
 
-            emit updateReport(3,0,data->bearing_alignment);
-            emit updateReport(3,1,data->antenna_height);
+            //bearing_alignment
+            quint32 bearing_alignment = (data->bearing_alignment[1] << 8) | (data->bearing_alignment[0]);
+            emit updateReport(3,0,bearing_alignment);
+
+            //antenna_height
+            quint32 antenna_height = (data->antenna_height[1] << 8) | (data->antenna_height[0]);
+            emit updateReport(3,1,antenna_height);
             break;
         }
         case (18 << 8) + 0x08:
@@ -369,84 +388,12 @@ void RadarReceive::processFrame(QByteArray data, int len)
             qDebug()<<Q_FUNC_INFO<<"strange header status "<<line->common.status;
         }
 
-        uint range_raw = 0;
-        uint range_meters = 0;
         int angle_raw = 0;
-
-//        short int heading_raw = 0;
-//        heading_raw = (line->common.heading[1] << 8) | line->common.heading[0];
-
-        ushort large_range = (line->br4g.largerange[1] << 8) | line->br4g.largerange[0];
-        ushort small_range = (line->br4g.smallrange[1] << 8) | line->br4g.smallrange[0];
         angle_raw = (line->br4g.angle[1] << 8) | line->br4g.angle[0];
-//        qDebug()<<Q_FUNC_INFO<<"large_range"<<large_range<<line->br4g.largerange[1]<<line->br4g.largerange[0];
-//        qDebug()<<Q_FUNC_INFO<<"small_range"<<small_range<<line->br4g.smallrange[1]<<line->br4g.smallrange[0];
-
-//        02-09-2020 13:21:57 DEBUG void RadarEngineARND::RadarReceive::processFrame(QByteArray, int) large_range 128 0 128
-
-        /* tapping result
-             * tx : 100 -> rec : 176/2c0
-             * tx : 250 -> rec : 439/6dc
-             * tx : 500 -> rec : 879/dbc
-             * tx : 750 -> rec : 2029/1498
-             * tx : 1 km -> rec : 2841
-             * tx : 1.5 km -> rec :  4057
-             * tx : 2 km -> rec :  3514
-             * tx : 3 km -> rec :  8285
-             * tx : 4 km -> rec :  9940
-             * tx : 6 km -> rec :  16538
-             * tx : 8 km -> rec :  21263 large range?
-             * tx : 12 km-> rec :  31950 large range?
-             * tx : 16 km-> rec :  -19411 large range?
-             * tx : 24 km-> rec :  -1636 large range?
-             * tx : 36     -> rec :  -2255 large range?
-             * tx : 48 km -> rec :  -23349 large range?
-             * tx : 64 km-> rec :  -9286 large range?
-             * tx : 72 km-> rec :  -2255 large range?
-             * tx : 96 km-> rec :  -23349 large range?
-
-      from lib plugin
-      if (large_range == 0x80) {
-        if (small_range == -1) {
-          range_raw = 0;  // Invalid range received
-        } else {
-          range_raw = small_range;
-        }
-      } else {
-        range_raw = large_range * 256;
-      }
-      range_meters = range_raw / 4;
-
-*/
-        if (large_range == 0x80)
-        {
-            if (small_range == -1)
-            {
-                range_raw = 0;  // Invalid range received
-            }
-            else
-            {
-//                range_raw = small_range/4;
-                range_raw = small_range;
-            }
-        }
-        else
-        {
-//            range_raw = large_range;
-            range_raw = large_range * small_range;
-            range_raw /= 128;
-        }
-        range_meters = range_raw/4;
-//        range_meters = range_raw;
-//        qDebug()<<Q_FUNC_INFO<<range_raw;
 
         const char *data_p = (const char *)line->data;
         QByteArray raw_data = QByteArray(data_p,512);
         //      qDebug()<<Q_FUNC_INFO<<"sizeof data "<<sizeof(line->data)<<"size data array"<<raw_data.size();
-        emit ProcessRadarSpoke(angle_raw,
-                               raw_data,
-                               RETURNS_PER_LINE,
-                               range_meters
-                               );
+        emit ProcessRadarSpoke(angle_raw,raw_data,RETURNS_PER_LINE);
     }
 }

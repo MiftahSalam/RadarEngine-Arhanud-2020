@@ -151,7 +151,7 @@ void RDVert::ProcessRadarSpoke(int angle, quint8 *data, size_t len)
     GLubyte strength = 0;
     quint64 now = QDateTime::currentMSecsSinceEpoch();
 
-    //    qDebug()<<Q_FUNC_INFO<<"transparency"<<transparency;
+//    qDebug()<<Q_FUNC_INFO;
 
     int r_begin = 0;
     int r_end = 0;
@@ -235,7 +235,7 @@ void RDVert::DrawRadarImage()
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_COLOR_ARRAY);
 
-    //    qDebug()<<Q_FUNC_INFO;
+//    qDebug()<<Q_FUNC_INFO;
 //    quint64 now = QDateTime::currentMSecsSinceEpoch();
 
     for (size_t i = 0; i < LINES_PER_ROTATION; i++)

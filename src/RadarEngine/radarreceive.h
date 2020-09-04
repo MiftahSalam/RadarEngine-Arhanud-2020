@@ -24,8 +24,7 @@ public:
     void setMulticastReport(QString addr,uint port);
 
 signals:
-    void ProcessRadarSpoke(int angle_raw, QByteArray data,
-                           int dataSize, uint range_meter);
+    void ProcessRadarSpoke(int angle_raw, QByteArray data,int dataSize);
     void updateReport(quint8 report_type,quint8 report_field,quint32 value);
 
 protected:

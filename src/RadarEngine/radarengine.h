@@ -49,7 +49,7 @@ signals:
 
 private slots:
     void receiveThread_Report(quint8 report_type, quint8 report_field, quint32 value);
-    void radarReceive_ProcessRadarSpoke(int, QByteArray, int, uint);
+    void radarReceive_ProcessRadarSpoke(int, QByteArray, int);
     void trigger_ReqRadarSetting();
     void timerTimeout();
     void trigger_clearTrail();
@@ -91,6 +91,7 @@ private:
     void ZoomTrails(float zoom_factor);
     void ClearTrails();
     void ComputeTargetTrails();
+    void checkRange(int new_range);
 };
 
 }

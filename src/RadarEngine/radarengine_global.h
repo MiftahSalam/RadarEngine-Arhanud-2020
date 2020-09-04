@@ -122,7 +122,7 @@ typedef enum ControlType
 
 enum RadarReportType
 {
-    RADAR_STATE,
+    RADAR_STATE = 0,
     RADAR_FILTER,
     RADAR_TYPE,
     RADAR_ALIGN,
@@ -133,8 +133,9 @@ enum RadarState
 {
     RADAR_OFF,
     RADAR_STANDBY,
+    RADAR_TRANSMIT,
     RADAR_WAKING_UP,
-    RADAR_TRANSMIT
+    RADAR_NO_SPOKE
 };
 
 enum RadarFilter
@@ -257,7 +258,24 @@ struct RadarRange {
 static const RadarRange g_ranges_metric[] =
 {
     /* */
-//    {200, 406, "200 m"}, //407 atw 406
+    {200, 2320, "200 m"},
+    {1852/4, 4630, "1/4 NM"},
+    {1852/2, 9260, "1/2 NM"},
+    {1852*3/4, 13890, "3/4 NM"},
+    {1852*3/2, 27780, "1.5 NM"},
+    {1852*3, 55560, "3 NM"},
+    {1852*6, 111120, "6 NM"},
+    {1852*12, 222240, "12 NM"},
+    {1852*24, 444480, "24 NM"},
+    {1852*36, 666720, "36 NM"},
+    {1852*48, 888960, "48 NM"},
+    {1852*64, 1185280, "64 NM"},
+    {1852*72, 1333440, "72 NM"},
+};
+/*
+static const RadarRange g_ranges_metric[] =
+{
+    {200, 406, "200 m"}, //407 atw 406
     {1852/4, 813, "1/4 NM"},
     {1852/2, 1627, "1/2 NM"},
     {1852*3/4, 2441, "3/4 NM"},
@@ -271,6 +289,8 @@ static const RadarRange g_ranges_metric[] =
     {1852*64, 208348, "64 NM"},
     {1852*72, 234392, "72 NM"},
 };
+     */
+
 struct TrailSettings
 {
     bool enable;

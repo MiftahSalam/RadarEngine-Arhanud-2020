@@ -122,18 +122,20 @@ void RadarEngine::timerTimeout()
         emit signal_forceExit();
     }
 
+    /*
     if(state_radar == RADAR_TRANSMIT && TIMED_OUT(now,data_timeout))
     {
         emit signal_state_change();
-        state_radar = RADAR_STANDBY;
+        state_radar = RADAR_NO_SPOKE;
         ResetSpokes();
     }
+    */
     if(state_radar == RADAR_TRANSMIT && TIMED_OUT(now,stay_alive_timeout))
     {
         emit signal_stay_alive();
         stay_alive_timeout = now + STAYALIVE_TIMEOUT;
     }
-    if(state_radar == RADAR_STANDBY && TIMED_OUT(now,radar_timeout))
+    if(((state_radar == RADAR_STANDBY) | (state_radar == RADAR_TRANSMIT)) && TIMED_OUT(now,radar_timeout))
     {
         state_radar = RADAR_OFF;
         ResetSpokes();
@@ -171,14 +173,14 @@ void RadarEngine::trigger_ReqControlChange(int ct, int val)
     radarTransmit->setControlValue((ControlType)ct,val);
 }
 
-void RadarEngine::radarReceive_ProcessRadarSpoke(int angle_raw, QByteArray data, int dataSize, uint range_meter)
+void RadarEngine::radarReceive_ProcessRadarSpoke(int angle_raw, QByteArray data, int dataSize)
 
 {
-    //    qDebug()<<Q_FUNC_INFO;
+//    qDebug()<<Q_FUNC_INFO<<m_range_meters<<m_old_range<<angle_raw;
     quint64 now = QDateTime::currentMSecsSinceEpoch();
     radar_timeout = now + WATCHDOG_TIMEOUT;
     data_timeout = now + DATA_TIMEOUT;
-    state_radar = RADAR_TRANSMIT;
+//    state_radar = RADAR_TRANSMIT; //need for offline mode
 
     short int hdt_raw = radar_settings.headingUp ? 0 : SCALE_DEGREES_TO_RAW(currentHeading);
     int bearing_raw = angle_raw + hdt_raw;
@@ -190,21 +192,6 @@ void RadarEngine::radarReceive_ProcessRadarSpoke(int angle_raw, QByteArray data,
     memset(raw_data_proj,0,dataSize);
 
     raw_data[RETURNS_PER_LINE - 1] = 200;  //  range ring, for testing
-
-    if ((m_range_meters != range_meter))
-    {
-        ResetSpokes();
-        m_range_meters = range_meter;
-        qDebug()<<Q_FUNC_INFO<<"detected spoke range change from "<<m_range_meters<<" to "<<range_meter;
-
-        int g;
-        for (g = 0; g < ARRAY_SIZE(g_ranges_metric); g++)
-        {
-            if (g_ranges_metric[g].actual_meters == range_meter)
-                break;
-        }
-        emit signal_range_change(g_ranges_metric[g].meters);
-    }
 
     quint8 weakest_normal_blob = 50; //next load from configuration file
     quint8 *hist_data = m_history[bearing].line;
@@ -458,6 +445,25 @@ void RadarEngine::trigger_ReqRadarSetting()
     radarReceive->start();
 }
 
+void RadarEngine::checkRange(int new_range)
+{
+    if ((m_range_meters != new_range))
+    {
+        ResetSpokes();
+        qDebug()<<Q_FUNC_INFO<<"detected spoke range change from "<<m_range_meters<<" to "<<new_range;
+        m_range_meters = new_range;
+
+        int g;
+        for (g = 0; g < ARRAY_SIZE(g_ranges_metric); g++)
+        {
+            if (g_ranges_metric[g].actual_meters == new_range)
+                break;
+        }
+        emit signal_range_change(g_ranges_metric[g].meters);
+    }
+
+}
+
 void RadarEngine::receiveThread_Report(quint8 report_type, quint8 report_field, quint32 value)
 {
     quint64 now = QDateTime::currentMSecsSinceEpoch();
@@ -468,6 +474,13 @@ void RadarEngine::receiveThread_Report(quint8 report_type, quint8 report_field, 
     {
     case RADAR_STATE:
         state_radar = (RadarState)report_field;
+        if(state_radar == RADAR_TRANSMIT && TIMED_OUT(now,data_timeout))
+        {
+//            emit signal_state_change();
+            state_radar = RADAR_NO_SPOKE;
+            ResetSpokes();
+        }
+
         qDebug()<<Q_FUNC_INFO<<"report status"<<state_radar;
         break;
     case RADAR_FILTER:
@@ -502,6 +515,7 @@ void RadarEngine::receiveThread_Report(quint8 report_type, quint8 report_field, 
             break;
         case RADAR_RANGE:
             filter.range = value;
+            checkRange(value);
             qDebug()<<Q_FUNC_INFO<<"report range"<<filter.range;
             break;
         default:
