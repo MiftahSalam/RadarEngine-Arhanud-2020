@@ -25,7 +25,7 @@ public:
 
 signals:
     void ProcessRadarSpoke(int angle_raw, QByteArray data,
-                           int dataSize, int range_meter);
+                           int dataSize, uint range_meter);
     void updateReport(quint8 report_type,quint8 report_field,quint32 value);
 
 protected:

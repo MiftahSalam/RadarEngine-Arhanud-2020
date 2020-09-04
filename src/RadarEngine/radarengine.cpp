@@ -15,6 +15,7 @@ ARPASettings arpa_settings;
 IFFSettings iff_settings;
 ADSBSettings adsb_settings;
 MqttSettings mqtt_settings;
+AnteneSwitchSettings antene_switch_settings;
 MapSettings map_settings;
 ProxySetting proxy_settings;
 TrailSettings trail_settings;
@@ -25,6 +26,7 @@ double currentOwnShipLon;
 double currentHeading;
 bool gps_auto;
 bool hdg_auto;
+int antena_switch;
 
 GLubyte old_strength_info[2048][512];
 GLubyte new_strength_info[2048][512];
@@ -54,6 +56,18 @@ RadarEngine::RadarEngine(QObject *parent):
     cur_radar_state = state_radar;
     old_draw_trails = trail_settings.enable;
     old_trail = trail_settings.trail;
+
+    raw_data_proj = new quint8 [RETURNS_PER_LINE];
+
+    const float rad_proj[ANTENE_COUNT] = { 1., cos(M_PI/9.0), cos(M_PI/4.5)};
+    for(int antena=0; antena<ANTENE_COUNT; antena++)
+    {
+        for (int radius = 0; radius < RETURNS_PER_LINE; radius++)
+        {
+            rad_proj_cur[radius][antena] = static_cast<int>(radius*rad_proj[antena]);
+        }
+    }
+
 
     ComputeColourMap();
     ComputeTargetTrails();
@@ -95,7 +109,8 @@ void RadarEngine::timerTimeout()
 {
     quint64 now = QDateTime::currentMSecsSinceEpoch();
 
-//    qDebug()<<Q_FUNC_INFO<<cur_elapsed_time<<TIME_EXPIRED;
+    //    qDebug()<<Q_FUNC_INFO<<cur_elapsed_time<<TIME_EXPIRED;
+    qDebug()<<Q_FUNC_INFO<<(int)state_radar;
     /*
     */
     cur_elapsed_time = cur_elapsed_time.addSecs(1);
@@ -156,7 +171,7 @@ void RadarEngine::trigger_ReqControlChange(int ct, int val)
     radarTransmit->setControlValue((ControlType)ct,val);
 }
 
-void RadarEngine::radarReceive_ProcessRadarSpoke(int angle_raw, QByteArray data, int dataSize, int range_meter)
+void RadarEngine::radarReceive_ProcessRadarSpoke(int angle_raw, QByteArray data, int dataSize, uint range_meter)
 
 {
     //    qDebug()<<Q_FUNC_INFO;
@@ -172,6 +187,7 @@ void RadarEngine::radarReceive_ProcessRadarSpoke(int angle_raw, QByteArray data,
     int bearing = MOD_ROTATION2048(bearing_raw / 2);
 
     quint8 *raw_data = (quint8*)data.data();
+    memset(raw_data_proj,0,dataSize);
 
     raw_data[RETURNS_PER_LINE - 1] = 200;  //  range ring, for testing
 
@@ -193,38 +209,42 @@ void RadarEngine::radarReceive_ProcessRadarSpoke(int angle_raw, QByteArray data,
     quint8 weakest_normal_blob = 50; //next load from configuration file
     quint8 *hist_data = m_history[bearing].line;
 
-    //    qDebug()<<Q_FUNC_INFO<<bearing;
-
     m_history[bearing].time = now;
     m_history[bearing].lat = currentOwnShipLat;
     m_history[bearing].lon = currentOwnShipLon;
 
+    int cur_antena = 0; //tes
     for (int radius = 0; radius < data.size(); radius++)
     {
-        /*
-        enable_mti = true;
-        mti_value = 100;
-        */
+        raw_data_proj[rad_proj_cur[radius][cur_antena]] = raw_data[radius];
+//        qDebug()<<Q_FUNC_INFO<<"rad_proj_cur"<<rad_proj_cur<<radius;
         if(mti_settings.enable)
         {
-            new_strength_info[bearing][radius] = raw_data[radius];
+//            new_strength_info[bearing][radius] = raw_data[radius];
+            new_strength_info[bearing][radius] = raw_data_proj[rad_proj_cur[radius][cur_antena]];
             if(abs((int)(old_strength_info[bearing][radius] - new_strength_info[bearing][radius])) < mti_settings.threshold)
-                raw_data[radius]=0;
+//                raw_data[radius]=0;
+            raw_data_proj[rad_proj_cur[radius][cur_antena]]=0;
         }
 
-        hist_data[radius] = hist_data[radius] << 1;  // shift left history byte 1 bit
+        hist_data[rad_proj_cur[radius][cur_antena]] = hist_data[rad_proj_cur[radius][cur_antena]] << 1;  // shift left history byte 1 bit
+//        hist_data[radius] = hist_data[radius] << 1;  // shift left history byte 1 bit
         // clear leftmost 2 bits to 00 for ARPA
-        hist_data[radius] = hist_data[radius] & 63;
-        if (raw_data[radius] >= weakest_normal_blob)
+        hist_data[rad_proj_cur[radius][cur_antena]] = hist_data[rad_proj_cur[radius][cur_antena]] & 63;
+//        hist_data[radius] = hist_data[radius] & 63;
+//        if (raw_data[radius] >= weakest_normal_blob)
+            if (raw_data_proj[rad_proj_cur[radius][cur_antena]] >= weakest_normal_blob)
         {
             // and add 1 if above threshold and set the left 2 bits, used for ARPA
-            hist_data[radius] = hist_data[radius] | 192;
+                hist_data[rad_proj_cur[radius][cur_antena]] = hist_data[rad_proj_cur[radius][cur_antena]] | 192;
+//                hist_data[radius] = hist_data[radius] | 192;
         }
 
         /*
         */
         if(mti_settings.enable)
-            old_strength_info[bearing][radius] = new_strength_info[bearing][radius];
+//            old_strength_info[bearing][radius] = new_strength_info[bearing][radius];
+        old_strength_info[bearing][rad_proj_cur[radius][cur_antena]] = new_strength_info[bearing][rad_proj_cur[radius][cur_antena]];
     }
 
     /*check Guardzone*/
@@ -251,8 +271,9 @@ void RadarEngine::radarReceive_ProcessRadarSpoke(int angle_raw, QByteArray data,
         // Relative trails
         quint8 *trail = m_trails.relative_trails[angle];
         for (int radius = 0; radius < dataSize - 1; radius++)
-        {  // len - 1 : no trails on range circle
-            if (raw_data[radius] >= weakest_normal_blob)
+        {
+//            if (raw_data[radius] >= weakest_normal_blob)
+                if (raw_data_proj[radius] >= weakest_normal_blob)
                 *trail = 1;
 
             else
@@ -260,14 +281,15 @@ void RadarEngine::radarReceive_ProcessRadarSpoke(int angle_raw, QByteArray data,
                 if (*trail > 0 && *trail < TRAIL_MAX_REVOLUTIONS)
                     (*trail)++;
 
-                raw_data[radius] = m_trail_colour[*trail];
-
+//                raw_data[radius] = m_trail_colour[*trail];
+                raw_data_proj[radius] = m_trail_colour[*trail];
             }
             trail++;
         }
     }
 
-    emit signal_plotRadarSpoke(bearing,raw_data,dataSize);
+//    emit signal_plotRadarSpoke(bearing,raw_data,dataSize);
+    emit signal_plotRadarSpoke(bearing,raw_data_proj,dataSize);
 }
 
 void RadarEngine::ResetSpokes()
@@ -432,9 +454,8 @@ void RadarEngine::trigger_ReqRadarSetting()
     sleep(1);
     radarReceive->setMulticastData(radar_settings.ip_data,radar_settings.port_data);
     radarReceive->setMulticastReport(radar_settings.ip_report,radar_settings.port_report);
+    radarTransmit->setMulticastData(radar_settings.ip_command,radar_settings.port_command);
     radarReceive->start();
-
-//    transmitHandler->setMulticastData(radar_settings.ip_command,radar_settings.port_command);
 }
 
 void RadarEngine::receiveThread_Report(quint8 report_type, quint8 report_field, quint32 value)
@@ -442,7 +463,7 @@ void RadarEngine::receiveThread_Report(quint8 report_type, quint8 report_field, 
     quint64 now = QDateTime::currentMSecsSinceEpoch();
     radar_timeout = now + WATCHDOG_TIMEOUT;
 
-    qDebug()<<Q_FUNC_INFO;
+//    qDebug()<<Q_FUNC_INFO;
     switch (report_type)
     {
     case RADAR_STATE:

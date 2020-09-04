@@ -243,7 +243,7 @@ void RadarReceive::run()
 }
 void RadarReceive::processReport(QByteArray data, int len)
 {
-    qDebug()<<Q_FUNC_INFO;
+//    qDebug()<<Q_FUNC_INFO;
 
     const quint8 *report =  (const quint8*)data.constData();
     if (report[1] == 0xC4)
@@ -369,16 +369,20 @@ void RadarReceive::processFrame(QByteArray data, int len)
             qDebug()<<Q_FUNC_INFO<<"strange header status "<<line->common.status;
         }
 
-        int range_raw = 0;
+        uint range_raw = 0;
+        uint range_meters = 0;
         int angle_raw = 0;
-        int range_meters = 0;
 
 //        short int heading_raw = 0;
 //        heading_raw = (line->common.heading[1] << 8) | line->common.heading[0];
 
-        short int large_range = (line->br4g.largerange[1] << 8) | line->br4g.largerange[0];
-        short int small_range = (line->br4g.smallrange[1] << 8) | line->br4g.smallrange[0];
+        ushort large_range = (line->br4g.largerange[1] << 8) | line->br4g.largerange[0];
+        ushort small_range = (line->br4g.smallrange[1] << 8) | line->br4g.smallrange[0];
         angle_raw = (line->br4g.angle[1] << 8) | line->br4g.angle[0];
+//        qDebug()<<Q_FUNC_INFO<<"large_range"<<large_range<<line->br4g.largerange[1]<<line->br4g.largerange[0];
+//        qDebug()<<Q_FUNC_INFO<<"small_range"<<small_range<<line->br4g.smallrange[1]<<line->br4g.smallrange[0];
+
+//        02-09-2020 13:21:57 DEBUG void RadarEngineARND::RadarReceive::processFrame(QByteArray, int) large_range 128 0 128
 
         /* tapping result
              * tx : 100 -> rec : 176/2c0
@@ -422,14 +426,18 @@ void RadarReceive::processFrame(QByteArray data, int len)
             }
             else
             {
-                range_raw = small_range/4;
+//                range_raw = small_range/4;
+                range_raw = small_range;
             }
         }
         else
         {
-            range_raw = large_range;
+//            range_raw = large_range;
+            range_raw = large_range * small_range;
+            range_raw /= 128;
         }
-        range_meters = range_raw;
+        range_meters = range_raw/4;
+//        range_meters = range_raw;
 //        qDebug()<<Q_FUNC_INFO<<range_raw;
 
         const char *data_p = (const char *)line->data;

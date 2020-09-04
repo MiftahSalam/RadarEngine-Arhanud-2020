@@ -57,7 +57,7 @@ void RadarTransmit::RadarTx()
 }
 void RadarTransmit::RadarStayAlive()
 {
-    //    qDebug()<<Q_FUNC_INFO;
+//    qDebug()<<Q_FUNC_INFO;
 
     const uchar transmit1[2]={0xA0,0xC1};
     const uchar transmit2[2]={0x03,0xC2};

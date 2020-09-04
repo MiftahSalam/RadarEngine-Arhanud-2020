@@ -49,7 +49,7 @@ signals:
 
 private slots:
     void receiveThread_Report(quint8 report_type, quint8 report_field, quint32 value);
-    void radarReceive_ProcessRadarSpoke(int, QByteArray, int, int);
+    void radarReceive_ProcessRadarSpoke(int, QByteArray, int, uint);
     void trigger_ReqRadarSetting();
     void timerTimeout();
     void trigger_clearTrail();
@@ -77,12 +77,14 @@ private:
     quint64 data_timeout;
     quint64 stay_alive_timeout;
 
-    int m_range_meters;
-    int m_old_range;
+    uint m_range_meters;
+    uint m_old_range;
 
     RadarState cur_radar_state;
     bool old_draw_trails;
     int old_trail;
+    int rad_proj_cur[RETURNS_PER_LINE][ANTENE_COUNT];
+    quint8 *raw_data_proj;
 
     void ComputeColourMap();
     void ResetSpokes();

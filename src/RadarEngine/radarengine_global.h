@@ -28,6 +28,8 @@
 */
 #define RADAR_ENGINE_ARND_VERSION_CHECK(major, minor, patch) ((major<<16)|(minor<<8)|(patch))
 
+#define ANTENE_COUNT (3) //3 antena
+
 #define RETURNS_PER_LINE (512)
 #define SPOKES (4096)
 #define LINES_PER_ROTATION (2048)
@@ -130,8 +132,8 @@ enum RadarReportType
 enum RadarState
 {
     RADAR_OFF,
-    RADAR_WAKING_UP,
     RADAR_STANDBY,
+    RADAR_WAKING_UP,
     RADAR_TRANSMIT
 };
 
@@ -223,6 +225,11 @@ struct MqttSettings
     QString ip;
     uint port;
 };
+struct AnteneSwitchSettings
+{
+    QString ip;
+    uint port;
+};
 struct ADSBSettings
 {
     bool show_track;
@@ -240,28 +247,29 @@ struct ARPASettings
     QString ip;
     uint port;
 };
+
 struct RadarRange {
   int meters; //command to radar and display
-  int actual_meters; //based on range feedback
+  uint actual_meters; //based on range feedback
   const char *name;
 };
 
 static const RadarRange g_ranges_metric[] =
 {
     /* */
-    {200, 407, "200 m"},
+//    {200, 406, "200 m"}, //407 atw 406
     {1852/4, 813, "1/4 NM"},
     {1852/2, 1627, "1/2 NM"},
     {1852*3/4, 2441, "3/4 NM"},
     {1852*3/2, 4883, "1.5 NM"},
-    {1852*3, 5000192, "3 NM"}, //5000192
-    {1852*6, 10000384, "6 NM"}, //10000384
-    {1852*12, 20001280, "12 NM"}, //20001280
-    {1852*24, 40002560, "24 NM"}, //40002560
-    {1852*36, 60004352, "36 NM"}, //60004352
-    {1852*48, 80005120, "48 NM"}, //80005120
-    {1852*64, 106674176, "64 NM"}, //106674176
-    {1852*72, 120008704, "72 NM"}, //120008704
+    {1852*3, 9766, "3 NM"},
+    {1852*6, 19532, "6 NM"},
+    {1852*12, 39065, "12 NM"},
+    {1852*24, 78130, "24 NM"},
+    {1852*36, 117196, "36 NM"},
+    {1852*48, 156260, "48 NM"},
+    {1852*64, 208348, "64 NM"},
+    {1852*72, 234392, "72 NM"},
 };
 struct TrailSettings
 {
@@ -303,6 +311,7 @@ extern ARPASettings arpa_settings;
 extern IFFSettings iff_settings;
 extern ADSBSettings adsb_settings;
 extern MqttSettings mqtt_settings;
+extern AnteneSwitchSettings antene_switch_settings;
 extern MapSettings map_settings;
 extern ProxySetting proxy_settings;
 extern TrailSettings trail_settings;
@@ -313,5 +322,6 @@ extern double currentOwnShipLon;
 extern double currentHeading;
 extern bool gps_auto;
 extern bool hdg_auto;
+extern int antena_switch;
 
 #endif // RADARENGINE_GLOBAL_H

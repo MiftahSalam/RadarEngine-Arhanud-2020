@@ -236,16 +236,17 @@ void RDVert::DrawRadarImage()
     glEnableClientState(GL_COLOR_ARRAY);
 
     //    qDebug()<<Q_FUNC_INFO;
-    quint64 now = QDateTime::currentMSecsSinceEpoch();
+//    quint64 now = QDateTime::currentMSecsSinceEpoch();
 
     for (size_t i = 0; i < LINES_PER_ROTATION; i++)
     {
         VertexLine* line = &m_vertices[i];
+        /*
         if (!line->count || TIMED_OUT(now, line->timeout))
         {
             continue;
         }
-
+        */
         glVertexPointer(2, GL_FLOAT, sizeof(VertexPoint), &line->points[0].x);
         glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(VertexPoint), &line->points[0].red);
         glDrawArrays(GL_TRIANGLES, 0, line->count);
