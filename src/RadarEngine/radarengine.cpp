@@ -59,7 +59,8 @@ RadarEngine::RadarEngine(QObject *parent):
 
     raw_data_proj = new quint8 [RETURNS_PER_LINE];
 
-    const float rad_proj[ANTENE_COUNT] = { 1., cos(M_PI/9.0), cos(M_PI/4.5)};
+    const float rad_proj[ANTENE_COUNT] = { 1., 1., 1.};
+//    const float rad_proj[ANTENE_COUNT] = { 1., cos(M_PI/9.0), cos(M_PI/4.5)};
     for(int antena=0; antena<ANTENE_COUNT; antena++)
     {
         for (int radius = 0; radius < RETURNS_PER_LINE; radius++)
@@ -481,37 +482,37 @@ void RadarEngine::receiveThread_Report(quint8 report_type, quint8 report_field, 
             ResetSpokes();
         }
 
-        qDebug()<<Q_FUNC_INFO<<"report status"<<state_radar;
+//        qDebug()<<Q_FUNC_INFO<<"report status"<<state_radar;
         break;
     case RADAR_FILTER:
         switch (report_field)
         {
         case RADAR_GAIN:
             filter.gain = value;
-            qDebug()<<Q_FUNC_INFO<<"report gain"<<filter.gain;
+//            qDebug()<<Q_FUNC_INFO<<"report gain"<<filter.gain;
             emit signal_updateReport();
             break;
         case RADAR_RAIN:
             filter.rain = value;
-            qDebug()<<Q_FUNC_INFO<<"report rain"<<filter.rain;
+//            qDebug()<<Q_FUNC_INFO<<"report rain"<<filter.rain;
             emit signal_updateReport();
             break;
         case RADAR_SEA:
             filter.sea = value;
-            qDebug()<<Q_FUNC_INFO<<"report sea"<<filter.sea;
+//            qDebug()<<Q_FUNC_INFO<<"report sea"<<filter.sea;
             emit signal_updateReport();
             break;
         case RADAR_TARGET_BOOST:
             filter.targetBoost = value;
-            qDebug()<<Q_FUNC_INFO<<"report TargetBoost"<<filter.targetBoost;
+//            qDebug()<<Q_FUNC_INFO<<"report TargetBoost"<<filter.targetBoost;
             break;
         case RADAR_LOCAL_INTERFERENCE_REJECTION:
             filter.LInterference = value;
-            qDebug()<<Q_FUNC_INFO<<"report local interference"<<filter.LInterference;
+//            qDebug()<<Q_FUNC_INFO<<"report local interference"<<filter.LInterference;
             break;
         case RADAR_TARGET_EXPANSION:
             filter.targetExpan = value;
-            qDebug()<<Q_FUNC_INFO<<"report argetExpan"<<filter.targetExpan;
+//            qDebug()<<Q_FUNC_INFO<<"report argetExpan"<<filter.targetExpan;
             break;
         case RADAR_RANGE:
             filter.range = value;

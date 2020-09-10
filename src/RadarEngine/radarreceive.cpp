@@ -218,7 +218,7 @@ void RadarReceive::run()
                 socketReportReceive.readDatagram(datagram.data(), datagram.size());
 
                 processReport(datagram,datagram.size());
-                qDebug()<<Q_FUNC_INFO<<"Receive datagram report with size "<<datagram.size();
+//                qDebug()<<Q_FUNC_INFO<<"Receive datagram report with size "<<datagram.size();
             }
         }
         else
@@ -243,7 +243,7 @@ void RadarReceive::run()
 }
 void RadarReceive::processReport(QByteArray data, int len)
 {
-    qDebug()<<Q_FUNC_INFO<<data.toHex();
+//    qDebug()<<Q_FUNC_INFO<<data.toHex();
 
     const quint8 *report =  (const quint8*)data.constData();
     if (report[1] == 0xC4)
@@ -280,7 +280,7 @@ void RadarReceive::processReport(QByteArray data, int len)
 
             //gain
             quint32 gain_mode = (s->field8[3] << 24) | (s->field8[2] << 16) | (s->field8[1] << 8) | (s->field8[0]);
-            qDebug()<<Q_FUNC_INFO<<"gain_mode"<<gain_mode<<s->gain;
+//            qDebug()<<Q_FUNC_INFO<<"gain_mode"<<gain_mode<<s->gain;
             if (gain_mode == 1) //auto
             {
                 emit updateReport(1,0,0);
@@ -309,7 +309,7 @@ void RadarReceive::processReport(QByteArray data, int len)
             //range
             quint32 range = (s->range[2] << 16) | (s->range[1] << 8) | (s->range[0]);
 //            range /= 16;
-            qDebug()<<Q_FUNC_INFO<<"range hex"<<QString::number(range,16);
+//            qDebug()<<Q_FUNC_INFO<<"range hex"<<QString::number(range,16);
             emit updateReport(1,6,range);
             break;
         }
@@ -351,7 +351,7 @@ void RadarReceive::processReport(QByteArray data, int len)
         }
         default:
         {
-            qDebug()<<Q_FUNC_INFO<<"receive unknown report. size"<<len;
+//            qDebug()<<Q_FUNC_INFO<<"receive unknown report. size"<<len;
             break;
         }
         }
