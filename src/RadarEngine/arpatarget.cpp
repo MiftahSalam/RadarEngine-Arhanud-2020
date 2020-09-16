@@ -570,6 +570,23 @@ void ARPATarget::RefreshTarget(int dist)
             target_id_count++;
             if (target_id_count >= 10000) target_id_count = 1;
             m_target_id = target_id_count;
+
+            double dif_lat = m_position.lat*M_PI/180.;
+            double dif_lon = ((m_position.lon*M_PI/180.)-(currentOwnShipLon*M_PI/180.))*cos(((currentOwnShipLat+m_position.lat)/2.)*M_PI/180.);
+            double R = 6371.;
+
+            dif_lat =  dif_lat - (currentOwnShipLat*M_PI/180.);
+
+            m_position.rng = sqrt(dif_lat * dif_lat + dif_lon * dif_lon)*R;
+            m_position.rng *= 1.5;
+            qreal bearing = atan2(dif_lon,dif_lat)*180./M_PI;
+
+            while(bearing < 0.0)
+            {
+                bearing += 360.0;
+            }
+            m_position.brn = bearing;
+
         }
 
         // Kalman filter to  calculate the apostriori local position and speed based on found position (pol)

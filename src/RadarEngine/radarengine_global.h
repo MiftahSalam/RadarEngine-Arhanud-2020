@@ -234,6 +234,7 @@ struct AnteneSwitchSettings
 struct ADSBSettings
 {
     bool show_track;
+    bool show_attr;
     QString config;
     int type;
 };
@@ -244,7 +245,8 @@ struct ARPASettings
     int search_radius2;
     int max_target_size;
     bool create_arpa_by_click;
-    bool show;
+    bool show_track;
+    bool show_attr;
     QString ip;
     uint port;
 };
@@ -272,7 +274,6 @@ static const RadarRange g_ranges_metric[] =
 };
 */
 /*
-*/
 static const RadarRange g_ranges_metric[] =
 {
     {200, 2320, "200 m"},
@@ -289,6 +290,7 @@ static const RadarRange g_ranges_metric[] =
     {1852*64, 1185280, "64 NM"},
     {1852*72, 1333440, "72 NM"},
 };
+*/
 /*
 static const RadarRange g_ranges_metric[] =
 {
@@ -360,5 +362,6 @@ extern double currentHeading;
 extern bool gps_auto;
 extern bool hdg_auto;
 extern int antena_switch;
+extern int cur_zoom_lvl;
 
 #endif // RADARENGINE_GLOBAL_H

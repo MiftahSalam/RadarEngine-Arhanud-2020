@@ -27,6 +27,7 @@ double currentHeading;
 bool gps_auto;
 bool hdg_auto;
 int antena_switch;
+int cur_zoom_lvl;
 
 GLubyte old_strength_info[2048][512];
 GLubyte new_strength_info[2048][512];
@@ -417,17 +418,7 @@ void RadarEngine::ComputeTargetTrails()
 
 void RadarEngine::trigger_ReqRangeChange(int range)
 {
-    int g;
-    int meter;
-    for (g = 0; g < ARRAY_SIZE(g_ranges_metric); g++)
-    {
-        if (g_ranges_metric[g].meters == range)
-        {
-            meter = g_ranges_metric[g].meters;
-            radarTransmit->setRange(meter);
-            break;
-        }
-    }
+    radarTransmit->setRange(range);
 }
 
 void RadarEngine::trigger_clearTrail()
@@ -448,21 +439,13 @@ void RadarEngine::trigger_ReqRadarSetting()
 
 void RadarEngine::checkRange(int new_range)
 {
-    if ((m_range_meters != new_range))
+    if ((m_range_meters != (uint)new_range))
     {
+        m_range_meters = new_range;
+        emit signal_range_change(new_range/10);
         ResetSpokes();
         qDebug()<<Q_FUNC_INFO<<"detected spoke range change from "<<m_range_meters<<" to "<<new_range;
-        m_range_meters = new_range;
-
-        int g;
-        for (g = 0; g < ARRAY_SIZE(g_ranges_metric); g++)
-        {
-            if (g_ranges_metric[g].actual_meters == new_range)
-                break;
-        }
-        emit signal_range_change(g_ranges_metric[g].meters);
     }
-
 }
 
 void RadarEngine::receiveThread_Report(quint8 report_type, quint8 report_field, quint32 value)

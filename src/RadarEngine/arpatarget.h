@@ -42,6 +42,8 @@ class Position
 public:
     double lat;
     double lon;
+    double rng;
+    double brn;
     double dlat_dt;   // m / sec
     double dlon_dt;   // m / sec
     quint64 time;  // millis
