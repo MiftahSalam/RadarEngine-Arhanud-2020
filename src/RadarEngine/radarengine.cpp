@@ -105,6 +105,7 @@ RadarEngine::RadarEngine(QObject *parent):
 RadarEngine::~RadarEngine()
 {
     Crypto::setProtect(cur_elapsed_time);
+    radarReceive->exitReq();
 }
 
 void RadarEngine::timerTimeout()

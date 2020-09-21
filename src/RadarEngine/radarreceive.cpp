@@ -138,9 +138,10 @@ RadarReceive::~RadarReceive()
 }
 void RadarReceive::exitReq()
 {
-    mutex.lock();
+    mutex.tryLock(1000);
     exit_req = true;
     mutex.unlock();
+    sleep(1);
 }
 void RadarReceive::setMulticastData(QString addr, uint port)
 {

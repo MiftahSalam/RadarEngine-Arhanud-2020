@@ -188,6 +188,7 @@ struct ReportScanSignal
 };
 struct RadarSettings
 {
+    bool op_mode;
     bool show_rings;
     bool headingUp;
     bool show_compass;
