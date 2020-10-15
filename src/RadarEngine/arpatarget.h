@@ -77,10 +77,11 @@ public:
     target_status getStatus() { return m_status; }
     QPointF blobPixelPosition();
 
-    int m_target_id, m_range;
+    int m_target_id, m_range, m_target_number;
     Polar m_max_angle, m_min_angle, m_max_r, m_min_r;
     Polar m_max_angle_future, m_min_angle_future, m_max_r_future, m_min_r_future;
     bool future_first;
+    bool selected;
     double m_speed_kn;
     double m_course;
     int m_stationary;

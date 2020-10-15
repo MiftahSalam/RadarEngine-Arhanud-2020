@@ -364,5 +364,6 @@ extern bool gps_auto;
 extern bool hdg_auto;
 extern int antena_switch;
 extern int cur_zoom_lvl;
+extern int track_counter;
 
 #endif // RADARENGINE_GLOBAL_H

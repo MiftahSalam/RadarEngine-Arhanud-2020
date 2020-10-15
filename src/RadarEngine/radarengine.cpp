@@ -28,6 +28,7 @@ bool gps_auto;
 bool hdg_auto;
 int antena_switch;
 int cur_zoom_lvl;
+int track_counter;
 
 GLubyte old_strength_info[2048][512];
 GLubyte new_strength_info[2048][512];
