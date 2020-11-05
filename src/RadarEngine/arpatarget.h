@@ -42,6 +42,7 @@ class Position
 public:
     double lat;
     double lon;
+    double alt;
     double rng;
     double brn;
     double dlat_dt;   // m / sec

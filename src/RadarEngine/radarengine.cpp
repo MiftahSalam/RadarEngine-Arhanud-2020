@@ -61,7 +61,7 @@ RadarEngine::RadarEngine(QObject *parent):
 
     raw_data_proj = new quint8 [RETURNS_PER_LINE];
 
-    const float rad_proj[ANTENE_COUNT] = { 1., 1., 1.};
+    const float rad_proj[ANTENE_COUNT] = { 1., 1., 1.}; //tes
 //    const float rad_proj[ANTENE_COUNT] = { 1., cos(M_PI/9.0), cos(M_PI/4.5)};
     for(int antena=0; antena<ANTENE_COUNT; antena++)
     {
@@ -204,7 +204,8 @@ void RadarEngine::radarReceive_ProcessRadarSpoke(int angle_raw, QByteArray data,
     m_history[bearing].lat = currentOwnShipLat;
     m_history[bearing].lon = currentOwnShipLon;
 
-    int cur_antena = 0; //tes
+    int cur_antena = antena_switch;
+//    int cur_antena = 0; //tes
     for (int radius = 0; radius < data.size(); radius++)
     {
         raw_data_proj[rad_proj_cur[radius][cur_antena]] = raw_data[radius];

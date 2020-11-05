@@ -54,6 +54,7 @@ ARPATarget::ARPATarget(QObject *parent, RadarEngine *re) :
     m_stationary = 0;
     m_position.dlat_dt = 0.;
     m_position.dlon_dt = 0.;
+    m_position.alt = 200.;
     m_speeds.nr = 0;
     m_pass1_result = UNKNOWN;
     m_pass_nr = PASS1;
@@ -571,22 +572,6 @@ void ARPATarget::RefreshTarget(int dist)
             if (target_id_count >= 10000) target_id_count = 1;
             m_target_id = target_id_count;
 
-            double dif_lat = m_position.lat*M_PI/180.;
-            double dif_lon = ((m_position.lon*M_PI/180.)-(currentOwnShipLon*M_PI/180.))*cos(((currentOwnShipLat+m_position.lat)/2.)*M_PI/180.);
-            double R = 6371.;
-
-            dif_lat =  dif_lat - (currentOwnShipLat*M_PI/180.);
-
-            m_position.rng = sqrt(dif_lat * dif_lat + dif_lon * dif_lon)*R;
-            m_position.rng *= 1.5;
-            qreal bearing = atan2(dif_lon,dif_lat)*180./M_PI;
-
-            while(bearing < 0.0)
-            {
-                bearing += 360.0;
-            }
-            m_position.brn = bearing;
-
         }
 
         // Kalman filter to  calculate the apostriori local position and speed based on found position (pol)
@@ -645,6 +630,7 @@ void ARPATarget::RefreshTarget(int dist)
         m_lost_count++;
 
         // delete if not found too often
+        qDebug()<<Q_FUNC_INFO<<"id"<<m_target_id<<"m_lost_count"<<m_lost_count<<"antena_switch"<<antena_switch;
         if (m_lost_count > MAX_LOST_COUNT)
         {
             qDebug()<<Q_FUNC_INFO<<"not found often";
@@ -662,6 +648,31 @@ void ARPATarget::RefreshTarget(int dist)
         m_position.dlat_dt = x_local.dlat_dt;  // meters / sec
         m_position.dlon_dt = x_local.dlon_dt;  // meters /sec
         m_position.sd_speed_kn = x_local.sd_speed_m_s * 3600. / 1852.;
+
+        double dif_lat = m_position.lat*M_PI/180.;
+        double dif_lon = ((m_position.lon*M_PI/180.)-(currentOwnShipLon*M_PI/180.))*cos(((currentOwnShipLat+m_position.lat)/2.)*M_PI/180.);
+        double R = 6371.;
+
+        dif_lat =  dif_lat - (currentOwnShipLat*M_PI/180.);
+
+        m_position.rng = sqrt(dif_lat * dif_lat + dif_lon * dif_lon)*R;
+        m_position.rng *= 1.5;
+        qreal bearing = atan2(dif_lon,dif_lat)*180./M_PI;
+
+        while(bearing < 0.0)
+        {
+            bearing += 360.0;
+        }
+
+        static const float rad_proj[ANTENE_COUNT] = { sin(M_PI/18.0), sin(M_PI/9.), sin(M_PI/6.)};
+
+        m_position.brn = bearing;
+
+        qDebug()<<Q_FUNC_INFO<<"calculate hight target: id"<<m_target_id<<"m_lost_count"<<m_lost_count<<"antena_switch"<<antena_switch;
+        if(m_lost_count == 0)
+            m_position.alt = m_position.rng*rad_proj[antena_switch]*1000.;
+
+
     }
 
     // set refresh time to the time of the spoke where the target was found
