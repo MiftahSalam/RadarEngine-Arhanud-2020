@@ -4,6 +4,7 @@
 #include <QObject>
 
 #include "radarengine_global.h"
+#include "radarengine.h"
 #include "arpatarget.h"
 
 namespace RadarEngineARND {

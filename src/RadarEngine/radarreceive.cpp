@@ -156,21 +156,36 @@ void RadarReceive::setMulticastReport(QString addr, uint port)
 
 void RadarReceive::run()
 {
-    //    qDebug()<<Q_FUNC_INFO;
     QUdpSocket socketDataReceive;
     QUdpSocket socketReportReceive;
     QString data_thread = _data;
     QString report_thread = _report;
     uint data_port_thread = _data_port;
     uint reportport_thread = _report_port;
+    int radar_id = m_engine->radarId;
+    bool enable = radar_id == 0 ? radar_settings.enable : radar_settings.enable1;
     exit_req = false;
 
+    if(radar_settings.enable)
+        radarIdRef = 0;
+    else if(radar_settings.enable1)
+        radarIdRef = 1;
+
+    qDebug()<<Q_FUNC_INFO<<"radarId"<<radar_id<<"enable"<<enable;
+
     QHostAddress groupAddress = QHostAddress(data_thread);
-    if(socketDataReceive.bind(QHostAddress::AnyIPv4, data_port_thread, QUdpSocket::ShareAddress))
+
+    if(enable)
     {
-        socketDataReceive.joinMulticastGroup(groupAddress);
-        qDebug()<<Q_FUNC_INFO<<"bind data multicast access succesed"<<data_thread<<data_port_thread;
+        if(socketDataReceive.bind(QHostAddress::AnyIPv4, data_port_thread, QUdpSocket::ShareAddress))
+        {
+            socketDataReceive.joinMulticastGroup(groupAddress);
+            qDebug()<<Q_FUNC_INFO<<"bind data multicast access succesed"<<data_thread<<data_port_thread;
+        }
     }
+    else
+        qDebug()<<Q_FUNC_INFO<<"radar id"<<radar_id<<"disabled";
+
     groupAddress = QHostAddress(report_thread);
     if(socketReportReceive.bind(QHostAddress::AnyIPv4,reportport_thread, QUdpSocket::ShareAddress))
     {
@@ -180,33 +195,36 @@ void RadarReceive::run()
 
     while(!exit_req)
     {
-        if(socketDataReceive.state()==QAbstractSocket::BoundState)
+        if(enable)
         {
-//            qDebug()<<Q_FUNC_INFO<<"data report multicast access ";
-            while (socketDataReceive.hasPendingDatagrams())
+            if(socketDataReceive.state()==QAbstractSocket::BoundState)
             {
-                QByteArray datagram;
-                datagram.resize(socketDataReceive.pendingDatagramSize());
-                socketDataReceive.readDatagram(datagram.data(), datagram.size());
+    //            qDebug()<<Q_FUNC_INFO<<"data report multicast access ";
+                while (socketDataReceive.hasPendingDatagrams())
+                {
+                    QByteArray datagram;
+                    datagram.resize(socketDataReceive.pendingDatagramSize());
+                    socketDataReceive.readDatagram(datagram.data(), datagram.size());
 
-                processFrame(datagram,datagram.size());
-//                qDebug()<<Q_FUNC_INFO<<"Receive datagram with size "<<datagram.size();
-            }
-        }
-        else
-        {
-            qDebug()<<Q_FUNC_INFO<<"try bind data multicast access ";
-            groupAddress = QHostAddress(data_thread);
-            if(socketDataReceive.bind(QHostAddress::AnyIPv4,data_port_thread, QUdpSocket::ShareAddress))
-            {
-                socketDataReceive.joinMulticastGroup(groupAddress);
-                qDebug()<<Q_FUNC_INFO<<"bind data multicast access succesed";
+                    processFrame(datagram,datagram.size());
+    //                qDebug()<<Q_FUNC_INFO<<"Receive datagram with size "<<datagram.size();
+                }
             }
             else
             {
-                qDebug()<<Q_FUNC_INFO<<"bind data access failed "<<socketDataReceive.errorString();
-            }
+                qDebug()<<Q_FUNC_INFO<<"try bind data multicast access ";
+                groupAddress = QHostAddress(data_thread);
+                if(socketDataReceive.bind(QHostAddress::AnyIPv4,data_port_thread, QUdpSocket::ShareAddress))
+                {
+                    socketDataReceive.joinMulticastGroup(groupAddress);
+                    qDebug()<<Q_FUNC_INFO<<"bind data multicast access succesed";
+                }
+                else
+                {
+                    qDebug()<<Q_FUNC_INFO<<"bind data access failed "<<socketDataReceive.errorString();
+                }
 
+            }
         }
 
         if(socketReportReceive.state()==QAbstractSocket::BoundState)
@@ -391,6 +409,19 @@ void RadarReceive::processFrame(QByteArray data, int len)
 
         int angle_raw = 0;
         angle_raw = (line->br4g.angle[1] << 8) | line->br4g.angle[0];
+
+
+        if(m_engine->radarId == radarIdRef)
+        {
+            if(angle_raw == 1024)
+            {
+                emit signal_changeAntena("1");
+            }
+            else if (angle_raw == 3072)
+            {
+                emit signal_changeAntena("0");
+            }
+        }
 
         const char *data_p = (const char *)line->data;
         QByteArray raw_data = QByteArray(data_p,512);

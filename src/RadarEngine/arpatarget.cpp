@@ -74,9 +74,9 @@ bool ARPATarget::Pix(int ang, int rad)
         return false;
 
     if (m_check_for_duplicate)        // check bit 1
-        return ((m_ri->m_history[MOD_ROTATION2048(ang)].line[rad] & 64) != 0);
+        return ((m_ri->m_history[MOD_ROTATION2048(ang)][antena_switch].line[rad] & 64) != 0);
     else        // check bit 0
-        return ((m_ri->m_history[MOD_ROTATION2048(ang)].line[rad] & 128) != 0);
+        return ((m_ri->m_history[MOD_ROTATION2048(ang)][antena_switch].line[rad] & 128) != 0);
 
 }
 bool ARPATarget::FindContourFromInside(Polar* pol)
@@ -109,7 +109,7 @@ bool ARPATarget::MultiPix(int ang, int rad)
     // pol must start on the contour of the blob
     // false if not
     // if false clears out pixels of th blob in hist
-    int length = arpa_settings.min_contour_length;
+    int length = arpa_settings[m_ri->radarId].min_contour_length;
     Polar start;
     start.angle = ang;
     start.r = rad;
@@ -215,7 +215,7 @@ bool ARPATarget::MultiPix(int ang, int rad)
     for (int a = min_angle.angle; a <= max_angle.angle; a++)
     {
         for (int r = min_r.r; r <= max_r.r; r++)
-            m_ri->m_history[MOD_ROTATION2048(a)].line[r] &= 63;
+            m_ri->m_history[MOD_ROTATION2048(a)][antena_switch].line[r] &= 63;
 
     }
     return false;
@@ -334,7 +334,7 @@ void ARPATarget::ResetPixels()
     {
         if (r >= LINES_PER_ROTATION || r < 0) continue;
         for (int a = m_min_angle.angle - DISTANCE_BETWEEN_TARGETS; a <= m_max_angle.angle + DISTANCE_BETWEEN_TARGETS; a++)
-            m_ri->m_history[MOD_ROTATION2048(a)].line[r] = m_ri->m_history[MOD_ROTATION2048(a)].line[r] & 127;
+            m_ri->m_history[MOD_ROTATION2048(a)][antena_switch].line[r] = m_ri->m_history[MOD_ROTATION2048(a)][antena_switch].line[r] & 127;
     }
 }
 
@@ -391,14 +391,14 @@ void ARPATarget::RefreshTarget(int dist)
 
 
 
-    quint64 time1 = m_ri->m_history[MOD_ROTATION2048(pol.angle)].time;
+    quint64 time1 = m_ri->m_history[MOD_ROTATION2048(pol.angle)][antena_switch].time;
     int margin = SCAN_MARGIN;
     if (m_pass_nr == PASS2)
     {
         margin += 100;
 //        qDebug()<<Q_FUNC_INFO<<"try pass2";
     }
-    quint64 time2 = m_ri->m_history[MOD_ROTATION2048(pol.angle + margin)].time;
+    quint64 time2 = m_ri->m_history[MOD_ROTATION2048(pol.angle + margin)][antena_switch].time;
     if ((time1 < (m_refresh + SCAN_MARGIN2) || time2 < time1) && m_status != 0)
     {
         quint64 now = QDateTime::currentDateTimeUtc().toMSecsSinceEpoch();  // millis
@@ -528,8 +528,8 @@ void ARPATarget::RefreshTarget(int dist)
     {
         ResetPixels();
         // target too large? (land masses?) get rid of it
-        if (abs(back.r - pol.r) > arpa_settings.max_target_size || abs(m_max_r.r - m_min_r.r) > arpa_settings.max_target_size ||
-                abs(m_min_angle.angle - m_max_angle.angle) > arpa_settings.max_target_size)
+        if (abs(back.r - pol.r) > arpa_settings[m_ri->radarId].max_target_size || abs(m_max_r.r - m_min_r.r) > arpa_settings[m_ri->radarId].max_target_size ||
+                abs(m_min_angle.angle - m_max_angle.angle) > arpa_settings[m_ri->radarId].max_target_size)
         {
             qDebug()<<Q_FUNC_INFO<<"target too large? (land masses?) get rid of it";
             SetStatusLost();
@@ -552,8 +552,8 @@ void ARPATarget::RefreshTarget(int dist)
         {
             // as this is the first measurement, move target to measured position
             Position p_own;
-            p_own.lat = m_ri->m_history[MOD_ROTATION2048(pol.angle)].lat;  // get the position at receive time
-            p_own.lon = m_ri->m_history[MOD_ROTATION2048(pol.angle)].lon;
+            p_own.lat = m_ri->m_history[MOD_ROTATION2048(pol.angle)][antena_switch].lat;  // get the position at receive time
+            p_own.lon = m_ri->m_history[MOD_ROTATION2048(pol.angle)][antena_switch].lon;
             m_position = Polar2Pos(pol, p_own, m_range);  // using own ship location from the time of reception
             m_position.dlat_dt = 0.;
             m_position.dlon_dt = 0.;
@@ -847,7 +847,7 @@ int ARPATarget::GetContour(Polar* pol)
         pol->angle -= LINES_PER_ROTATION;
 
     pol->r = (m_max_r.r + m_min_r.r) / 2; //av radius of centroid
-    pol->time = m_ri->m_history[MOD_ROTATION2048(pol->angle)].time;
+    pol->time = m_ri->m_history[MOD_ROTATION2048(pol->angle)][antena_switch].time;
     return 0;  //  succes, blob found
 }
 

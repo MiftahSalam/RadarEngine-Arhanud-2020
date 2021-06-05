@@ -15,11 +15,14 @@ typedef quint8 TrailRevolutionsAge;
 
 namespace RadarEngineARND {
 
+class RadarArpa;
+class RadarReceive;
+
 class RADAR_ENGINE_ARND_EXPORT RadarEngine : public QObject
 {
     Q_OBJECT
 public:
-    RadarEngine(QObject *parent=nullptr);
+    RadarEngine(QObject *parent=nullptr, int id=-1);
     ~RadarEngine();
 
     struct line_history
@@ -30,12 +33,13 @@ public:
       double lon;
     };
 
-    line_history m_history[LINES_PER_ROTATION];
+    line_history m_history[LINES_PER_ROTATION][ANTENE_COUNT];
     BlobColour m_colour_map[UINT8_MAX + 1];
     QColor m_colour_map_rgb[BLOB_COLOURS];
 
     RadarDraw *radarDraw;
     RadarArpa *radarArpa;
+    int radarId;
 
 signals:
     void signal_updateReport();
@@ -46,6 +50,7 @@ signals:
     void signal_sendStby();
     void signal_state_change();
     void signal_forceExit();
+    void signal_changeAntena(QString sig);
 
 private slots:
     void receiveThread_Report(quint8 report_type, quint8 report_field, quint32 value);
@@ -55,6 +60,7 @@ private slots:
     void trigger_clearTrail();
     void trigger_ReqRangeChange(int range);
     void trigger_ReqControlChange(int ct,int val);
+    void trigger_ReqTx();
 
 private:
     struct TrailBuffer

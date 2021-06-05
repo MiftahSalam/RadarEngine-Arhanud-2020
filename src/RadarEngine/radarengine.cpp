@@ -7,11 +7,12 @@
 using namespace RadarEngineARND;
 
 RadarState state_radar;
+RadarState state_radar1;
 ReportFilter filter;
 ReportAlign align;
 ReportScanSignal scanSignal;
 RadarSettings radar_settings;
-ARPASettings arpa_settings;
+ARPASettings arpa_settings[2];
 IFFSettings iff_settings;
 ADSBSettings adsb_settings;
 MqttSettings mqtt_settings;
@@ -47,10 +48,16 @@ enum {
     TRAIL_ARRAY_SIZE
 };
 
-RadarEngine::RadarEngine(QObject *parent):
-    QObject(parent)
+RadarEngine::RadarEngine(QObject *parent, int id):
+    QObject(parent), radarId(id)
 {
     qDebug()<<Q_FUNC_INFO;
+
+    if(radarId < 0)
+    {
+        qDebug()<<Q_FUNC_INFO<<"invalid radar id";
+        return;
+    }
 
     radar_timeout = 0;
     m_range_meters = 0;
@@ -94,15 +101,26 @@ RadarEngine::RadarEngine(QObject *parent):
             this,&RadarEngine::receiveThread_Report);
     connect(radarReceive,&RadarReceive::ProcessRadarSpoke,
             this,&RadarEngine::radarReceive_ProcessRadarSpoke);
+    connect(radarReceive,&RadarReceive::signal_changeAntena,this,&RadarEngine::signal_changeAntena);
 
     connect(this,SIGNAL(signal_sendStby()),radarTransmit,SLOT(RadarStby()));
-    connect(this,SIGNAL(signal_sendTx()),radarTransmit,SLOT(RadarTx()));
+    connect(this,SIGNAL(signal_sendTx()),this,SLOT(trigger_ReqTx()));
     connect(this,SIGNAL(signal_stay_alive()),radarTransmit,SLOT(RadarStayAlive()));
 
     trigger_ReqRadarSetting();
     timer->start(1000);
 }
 
+void RadarEngine::trigger_ReqTx()
+{
+    bool tx = false;
+    if(radar_settings.enable && radarId == 0)
+        tx = true;
+    if(radar_settings.enable1 && radarId == 1)
+        tx = true;
+
+    if(tx) radarTransmit->RadarTx();
+}
 RadarEngine::~RadarEngine()
 {
     Crypto::setProtect(cur_elapsed_time);
@@ -114,7 +132,6 @@ void RadarEngine::timerTimeout()
     quint64 now = QDateTime::currentMSecsSinceEpoch();
 
     //    qDebug()<<Q_FUNC_INFO<<cur_elapsed_time<<TIME_EXPIRED;
-    qDebug()<<Q_FUNC_INFO<<(int)state_radar;
     /*
     */
     cur_elapsed_time = cur_elapsed_time.addSecs(1);
@@ -126,33 +143,50 @@ void RadarEngine::timerTimeout()
         emit signal_forceExit();
     }
 
-    /*
-    if(state_radar == RADAR_TRANSMIT && TIMED_OUT(now,data_timeout))
-    {
-        emit signal_state_change();
-        state_radar = RADAR_NO_SPOKE;
+    RadarState *cur_radar_state = radarId ? &state_radar1 : &state_radar;
+    qDebug()<<Q_FUNC_INFO<<"state_radar"<<(int)state_radar<<"state_radar1"<<(int)state_radar1;
+
+
+
+    if(state_radar == RADAR_STANDBY && state_radar1 == RADAR_STANDBY)
         ResetSpokes();
+
+    if(*cur_radar_state == RADAR_TRANSMIT && TIMED_OUT(now,data_timeout))
+    {
+        *cur_radar_state = RADAR_STANDBY;
     }
-    */
-    if(state_radar == RADAR_TRANSMIT && TIMED_OUT(now,stay_alive_timeout))
+    if(*cur_radar_state == RADAR_TRANSMIT && TIMED_OUT(now,stay_alive_timeout))
     {
         emit signal_stay_alive();
         stay_alive_timeout = now + STAYALIVE_TIMEOUT;
     }
-    if(((state_radar == RADAR_STANDBY) | (state_radar == RADAR_TRANSMIT)) && TIMED_OUT(now,radar_timeout))
+    if(*cur_radar_state == RADAR_STANDBY && TIMED_OUT(now,radar_timeout))
     {
-        state_radar = RADAR_OFF;
+        *cur_radar_state = RADAR_OFF;
         ResetSpokes();
     }
+
+
+
+//    if(state_radar == RADAR_TRANSMIT && TIMED_OUT(now,stay_alive_timeout))
+//    {
+//        emit signal_stay_alive();
+//        stay_alive_timeout = now + STAYALIVE_TIMEOUT;
+//    }
+//    if(((state_radar == RADAR_STANDBY) | (state_radar == RADAR_TRANSMIT)) && TIMED_OUT(now,radar_timeout))
+//    {
+//        state_radar = RADAR_OFF;
+//        ResetSpokes();
+//    }
 
 //    state_radar = RADAR_STANDBY; //temporary
 //    state_radar = RADAR_TRANSMIT; //temporary
 
-    if(cur_radar_state != state_radar)
-    {
-        cur_radar_state = state_radar;
-        emit signal_state_change();
-    }
+//    if(cur_radar_state != state_radar)
+//    {
+//        cur_radar_state = state_radar;
+//        emit signal_state_change();
+//    }
 
     if(old_draw_trails != trail_settings.enable)
     {
@@ -180,11 +214,16 @@ void RadarEngine::trigger_ReqControlChange(int ct, int val)
 void RadarEngine::radarReceive_ProcessRadarSpoke(int angle_raw, QByteArray data, int dataSize)
 
 {
-//    qDebug()<<Q_FUNC_INFO<<m_range_meters<<m_old_range<<angle_raw;
+//    qDebug()<<Q_FUNC_INFO<<"radarId"<<radarId<<m_range_meters<<m_old_range<<angle_raw;
     quint64 now = QDateTime::currentMSecsSinceEpoch();
     radar_timeout = now + WATCHDOG_TIMEOUT;
     data_timeout = now + DATA_TIMEOUT;
 //    state_radar = RADAR_TRANSMIT; //need for offline mode
+
+
+    RadarState *cur_radar_state = radarId ? &state_radar1 : &state_radar;
+    *cur_radar_state = RADAR_TRANSMIT;
+
 
     short int hdt_raw = radar_settings.headingUp ? 0 : SCALE_DEGREES_TO_RAW(currentHeading);
     int bearing_raw = angle_raw + hdt_raw;
@@ -197,38 +236,39 @@ void RadarEngine::radarReceive_ProcessRadarSpoke(int angle_raw, QByteArray data,
 
     raw_data[RETURNS_PER_LINE - 1] = 200;  //  range ring, for testing
 
+    const int CUR_ANTENA = antena_switch;
+
     quint8 weakest_normal_blob = 50; //next load from configuration file
-    quint8 *hist_data = m_history[bearing].line;
+    quint8 *hist_data = m_history[bearing][CUR_ANTENA].line;
 
-    m_history[bearing].time = now;
-    m_history[bearing].lat = currentOwnShipLat;
-    m_history[bearing].lon = currentOwnShipLon;
+    m_history[bearing][CUR_ANTENA].time = now;
+    m_history[bearing][CUR_ANTENA].lat = currentOwnShipLat;
+    m_history[bearing][CUR_ANTENA].lon = currentOwnShipLon;
 
-    int cur_antena = antena_switch;
 //    int cur_antena = 0; //tes
     for (int radius = 0; radius < data.size(); radius++)
     {
-        raw_data_proj[rad_proj_cur[radius][cur_antena]] = raw_data[radius];
+        raw_data_proj[rad_proj_cur[radius][CUR_ANTENA]] = raw_data[radius];
 //        qDebug()<<Q_FUNC_INFO<<"rad_proj_cur"<<rad_proj_cur<<radius;
         if(mti_settings.enable)
         {
 //            new_strength_info[bearing][radius] = raw_data[radius];
-            new_strength_info[bearing][radius] = raw_data_proj[rad_proj_cur[radius][cur_antena]];
+            new_strength_info[bearing][radius] = raw_data_proj[rad_proj_cur[radius][CUR_ANTENA]];
             if(abs((int)(old_strength_info[bearing][radius] - new_strength_info[bearing][radius])) < mti_settings.threshold)
 //                raw_data[radius]=0;
-            raw_data_proj[rad_proj_cur[radius][cur_antena]]=0;
+            raw_data_proj[rad_proj_cur[radius][CUR_ANTENA]]=0;
         }
 
-        hist_data[rad_proj_cur[radius][cur_antena]] = hist_data[rad_proj_cur[radius][cur_antena]] << 1;  // shift left history byte 1 bit
+        hist_data[rad_proj_cur[radius][CUR_ANTENA]] = hist_data[rad_proj_cur[radius][CUR_ANTENA]] << 1;  // shift left history byte 1 bit
 //        hist_data[radius] = hist_data[radius] << 1;  // shift left history byte 1 bit
         // clear leftmost 2 bits to 00 for ARPA
-        hist_data[rad_proj_cur[radius][cur_antena]] = hist_data[rad_proj_cur[radius][cur_antena]] & 63;
+        hist_data[rad_proj_cur[radius][CUR_ANTENA]] = hist_data[rad_proj_cur[radius][CUR_ANTENA]] & 63;
 //        hist_data[radius] = hist_data[radius] & 63;
 //        if (raw_data[radius] >= weakest_normal_blob)
-            if (raw_data_proj[rad_proj_cur[radius][cur_antena]] >= weakest_normal_blob)
+            if (raw_data_proj[rad_proj_cur[radius][CUR_ANTENA]] >= weakest_normal_blob)
         {
             // and add 1 if above threshold and set the left 2 bits, used for ARPA
-                hist_data[rad_proj_cur[radius][cur_antena]] = hist_data[rad_proj_cur[radius][cur_antena]] | 192;
+                hist_data[rad_proj_cur[radius][CUR_ANTENA]] = hist_data[rad_proj_cur[radius][CUR_ANTENA]] | 192;
 //                hist_data[radius] = hist_data[radius] | 192;
         }
 
@@ -236,7 +276,7 @@ void RadarEngine::radarReceive_ProcessRadarSpoke(int angle_raw, QByteArray data,
         */
         if(mti_settings.enable)
 //            old_strength_info[bearing][radius] = new_strength_info[bearing][radius];
-        old_strength_info[bearing][rad_proj_cur[radius][cur_antena]] = new_strength_info[bearing][rad_proj_cur[radius][cur_antena]];
+        old_strength_info[bearing][rad_proj_cur[radius][CUR_ANTENA]] = new_strength_info[bearing][rad_proj_cur[radius][CUR_ANTENA]];
     }
 
     /*check Guardzone*/
@@ -334,9 +374,11 @@ void RadarEngine::ComputeColourMap()
     for (int i = 0; i < BLOB_COLOURS; i++)
         m_colour_map_rgb[i] = QColor(0, 0, 0);
 
-    m_colour_map_rgb[BLOB_STRONG] = Qt::green;
-    m_colour_map_rgb[BLOB_INTERMEDIATE] = Qt::green;
-    m_colour_map_rgb[BLOB_WEAK] = Qt::green;
+    QColor color = radarId ? QColor(0, 255, 0) : QColor(0, 150, 0);
+
+    m_colour_map_rgb[BLOB_STRONG] = color;
+    m_colour_map_rgb[BLOB_INTERMEDIATE] = color;
+    m_colour_map_rgb[BLOB_WEAK] = color;
 
     if (trail_settings.enable)
     {
@@ -434,10 +476,22 @@ void RadarEngine::trigger_ReqRadarSetting()
     ResetSpokes();
     radarReceive->exitReq();
     sleep(1);
-    radarReceive->setMulticastData(radar_settings.ip_data,radar_settings.port_data);
-    radarReceive->setMulticastReport(radar_settings.ip_report,radar_settings.port_report);
     radarTransmit->setMulticastData(radar_settings.ip_command,radar_settings.port_command);
+
+    switch (radarId) {
+    case 0:
+        radarReceive->setMulticastData(radar_settings.ip_data,radar_settings.port_data);
+        radarReceive->setMulticastReport(radar_settings.ip_report,radar_settings.port_report);
+        break;
+    case 1:
+        radarReceive->setMulticastData(radar_settings.ip_data1,radar_settings.port_data1);
+        radarReceive->setMulticastReport(radar_settings.ip_report1,radar_settings.port_report1);
+        break;
+    default:
+        break;
+    }
     radarReceive->start();
+
 }
 
 void RadarEngine::checkRange(int new_range)
@@ -455,16 +509,17 @@ void RadarEngine::receiveThread_Report(quint8 report_type, quint8 report_field, 
 {
     quint64 now = QDateTime::currentMSecsSinceEpoch();
     radar_timeout = now + WATCHDOG_TIMEOUT;
+    RadarState *cur_radar_state = radarId ? &state_radar1 : &state_radar;
 
 //    qDebug()<<Q_FUNC_INFO;
     switch (report_type)
     {
     case RADAR_STATE:
-        state_radar = (RadarState)report_field;
-        if(state_radar == RADAR_TRANSMIT && TIMED_OUT(now,data_timeout))
+        *cur_radar_state = (RadarState)report_field;
+        if(*cur_radar_state == RADAR_TRANSMIT && TIMED_OUT(now,data_timeout))
         {
 //            emit signal_state_change();
-            state_radar = RADAR_NO_SPOKE;
+            *cur_radar_state = RADAR_NO_SPOKE;
             ResetSpokes();
         }
 

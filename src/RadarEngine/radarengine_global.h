@@ -8,6 +8,8 @@
 #include <QtCore/QDebug>
 #include <QColor>
 
+#include <math.h>
+
 #ifdef RADAR_ENGINE_ARND_STATIC
 #   define RADAR_ENGINE_ARND_EXPORT
 #else
@@ -194,12 +196,20 @@ struct RadarSettings
     bool show_compass;
     bool show_heading_marker;
     int last_scale;
+    bool enable;
     QString ip_data;
     uint port_data;
     QString ip_report;
     uint port_report;
     QString ip_command;
     uint port_command;
+    bool enable1;
+    QString ip_data1;
+    uint port_data1;
+    QString ip_report1;
+    uint port_report1;
+    QString ip_command1;
+    uint port_command1;
 };
 struct MapSettings
 {
@@ -343,11 +353,12 @@ static const QList<int> distanceList = QList<int>()<<5000000 //0
 
 
 extern RadarState state_radar;
+extern RadarState state_radar1;
 extern ReportFilter filter;
 extern ReportAlign align;
 extern ReportScanSignal scanSignal;
 extern RadarSettings radar_settings;
-extern ARPASettings arpa_settings;
+extern ARPASettings arpa_settings[2];
 extern IFFSettings iff_settings;
 extern ADSBSettings adsb_settings;
 extern MqttSettings mqtt_settings;

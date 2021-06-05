@@ -6,6 +6,7 @@
 #include <QMutex>
 
 #include "radarengine_global.h"
+#include "radarengine.h"
 
 namespace RadarEngineARND {
 
@@ -26,6 +27,7 @@ public:
 signals:
     void ProcessRadarSpoke(int angle_raw, QByteArray data,int dataSize);
     void updateReport(quint8 report_type,quint8 report_field,quint32 value);
+    void signal_changeAntena(QString sig);
 
 protected:
     void run();
@@ -35,6 +37,7 @@ private:
     void processReport(QByteArray data, int len);
 
     bool exit_req;
+    int radarIdRef;
     QString _data;
     uint _data_port;
     QString _report;

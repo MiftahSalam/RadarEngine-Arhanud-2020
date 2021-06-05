@@ -85,7 +85,7 @@ void RadarArpa::RefreshArpaTargets()
     // main target refresh loop
 
     // pass 1 of target refresh
-    int dist = arpa_settings.search_radius1;
+    int dist = arpa_settings[m_ri->radarId].search_radius1;
     for (int i = 0; i < m_number_of_targets; i++)
     {
         if (!m_target[i])
@@ -104,7 +104,7 @@ void RadarArpa::RefreshArpaTargets()
     }
 
     // pass 2 of target refresh
-    dist = arpa_settings.search_radius2;
+    dist = arpa_settings[m_ri->radarId].search_radius2;
     for (int i = 0; i < m_number_of_targets; i++)
     {
         if (!m_target[i])
@@ -132,7 +132,7 @@ bool RadarArpa::Pix(int ang, int rad)
         return false;
 
     //    qDebug()<<Q_FUNC_INFO<<ang<<rad;
-    return ((m_ri->m_history[MOD_ROTATION2048(ang)].line[rad] & 128) != 0);
+    return ((m_ri->m_history[MOD_ROTATION2048(ang)][antena_switch].line[rad] & 128) != 0);
 }
 
 bool RadarArpa::MultiPix(int ang, int rad)
@@ -142,7 +142,7 @@ bool RadarArpa::MultiPix(int ang, int rad)
     // false if not
     // if false clears out pixels of th blob in hist
     //    wxCriticalSectionLocker lock(ArpaTarget::m_ri->m_exclusive);
-    int length = arpa_settings.min_contour_length;
+    int length = arpa_settings[m_ri->radarId].min_contour_length;
     Polar start;
     start.angle = ang;
     start.r = rad;
@@ -242,7 +242,7 @@ bool RadarArpa::MultiPix(int ang, int rad)
     for (int a = min_angle.angle; a <= max_angle.angle; a++)
     {
         for (int r = min_r.r; r <= max_r.r; r++)
-            m_ri->m_history[MOD_ROTATION2048(a)].line[r] &= 63;
+            m_ri->m_history[MOD_ROTATION2048(a)][antena_switch].line[r] &= 63;
     }
     return false;
 }
@@ -361,7 +361,7 @@ int RadarArpa::AcquireNewARPATarget(Polar pol, int status)
     target->m_check_for_duplicate = false;
     target->m_automatic = true;
     target->m_target_id = 0;
-    target->RefreshTarget(arpa_settings.search_radius1);
+    target->RefreshTarget(arpa_settings[m_ri->radarId].search_radius1);
     return i;
 }
 
