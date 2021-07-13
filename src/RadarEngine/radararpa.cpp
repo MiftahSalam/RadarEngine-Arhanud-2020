@@ -4,8 +4,8 @@
 
 using namespace RadarEngineARND;
 
-RadarArpa::RadarArpa(QObject *parent,RadarEngine *ri) :
-    QObject(parent),m_ri(ri)
+RadarArpa::RadarArpa(QObject *parent, RadarEngine *ri, int antena_id) :
+    QObject(parent),m_ri(ri),antheneID(antena_id)
 {
     cur_elapsed_time = Crypto::initProtect();
     if(!Crypto::checkProtect(cur_elapsed_time))
@@ -132,7 +132,7 @@ bool RadarArpa::Pix(int ang, int rad)
         return false;
 
     //    qDebug()<<Q_FUNC_INFO<<ang<<rad;
-    return ((m_ri->m_history[MOD_ROTATION2048(ang)][antena_switch].line[rad] & 128) != 0);
+    return ((m_ri->m_history[MOD_ROTATION2048(ang)][antheneID].line[rad] & 128) != 0);
 }
 
 bool RadarArpa::MultiPix(int ang, int rad)
@@ -242,7 +242,7 @@ bool RadarArpa::MultiPix(int ang, int rad)
     for (int a = min_angle.angle; a <= max_angle.angle; a++)
     {
         for (int r = min_r.r; r <= max_r.r; r++)
-            m_ri->m_history[MOD_ROTATION2048(a)][antena_switch].line[r] &= 63;
+            m_ri->m_history[MOD_ROTATION2048(a)][antheneID].line[r] &= 63;
     }
     return false;
 }
@@ -269,7 +269,7 @@ void RadarArpa::AcquireOrDeleteMarpaTarget(Position target_pos, int status)
     {
         if (m_target[m_number_of_targets] == 0)
         {
-            m_target[m_number_of_targets] = new ARPATarget(this,m_ri);
+            m_target[m_number_of_targets] = new ARPATarget(this, m_ri, antheneID);
             //            qDebug()<<Q_FUNC_INFO<<"create new ARPAtarget";
         }
         i_target = m_number_of_targets;
@@ -326,7 +326,7 @@ int RadarArpa::AcquireNewARPATarget(Polar pol, int status)
     if (m_number_of_targets < MAX_NUMBER_OF_TARGETS - 1 || (m_number_of_targets == MAX_NUMBER_OF_TARGETS - 1 && status == -2))
     {
         if (!m_target[m_number_of_targets])
-            m_target[m_number_of_targets] = new ARPATarget(this, m_ri);
+            m_target[m_number_of_targets] = new ARPATarget(this, m_ri, antheneID);
 
         i = m_number_of_targets;
         m_number_of_targets++;

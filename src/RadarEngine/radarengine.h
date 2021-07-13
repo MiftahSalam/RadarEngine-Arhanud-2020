@@ -38,7 +38,7 @@ public:
     QColor m_colour_map_rgb[BLOB_COLOURS];
 
     RadarDraw *radarDraw;
-    RadarArpa *radarArpa;
+    RadarArpa *radarArpa[ANTENE_COUNT];
     int radarId;
 
 signals:

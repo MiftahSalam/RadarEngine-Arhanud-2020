@@ -95,7 +95,9 @@ RadarEngine::RadarEngine(QObject *parent, int id):
     radarReceive = new RadarReceive(this,this);
     radarTransmit = new RadarTransmit(this,this);
     radarDraw = RadarDraw::make_Draw(this,0);
-    radarArpa = new RadarArpa(this,this);
+    for (int i = 0; i < ANTENE_COUNT; ++i) {
+        radarArpa[i] = new RadarArpa(this,this,i);
+    }
 
     connect(radarReceive,&RadarReceive::updateReport,
             this,&RadarEngine::receiveThread_Report);
@@ -490,6 +492,14 @@ void RadarEngine::trigger_ReqRadarSetting()
     default:
         break;
     }
+
+    bool stby = false;
+    if(!radar_settings.enable && radarId == 0)
+        stby = true;
+    if(!radar_settings.enable1 && radarId == 1)
+        stby = true;
+    if(stby) emit signal_sendStby();
+
     radarReceive->start();
 
 }

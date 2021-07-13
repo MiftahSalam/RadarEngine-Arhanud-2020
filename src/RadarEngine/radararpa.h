@@ -15,8 +15,9 @@ class RadarArpa : public QObject
 {
     Q_OBJECT
 public:
-    explicit RadarArpa(QObject *parent = 0,RadarEngine *ri=0);
+    explicit RadarArpa(QObject *parent = 0, RadarEngine *ri=0, int antena_id = -1);
 
+    int antheneID;
     int m_number_of_targets,range_meters;
     ARPATarget *m_target[MAX_NUMBER_OF_TARGETS];
 
@@ -35,7 +36,6 @@ private:
     bool Pix(int ang, int rad);
     void AcquireOrDeleteMarpaTarget(Position target_pos, int status);
     RadarEngine *m_ri;
-
 };
 
 }

@@ -6,8 +6,10 @@
 #include "radarengine_global.h"
 #include "kalmanfilter.h"
 
-#define SCAN_MARGIN (150)
-#define SCAN_MARGIN2 (1000)
+#define SCAN_MARGIN (750)
+//#define SCAN_MARGIN (150)
+#define SCAN_MARGIN2 (5000)
+//#define SCAN_MARGIN2 (1000)
 
 #define MAX_NUMBER_OF_TARGETS (200)
 #define MAX_CONTOUR_LENGTH (601)
@@ -71,7 +73,7 @@ class ARPATarget : public QObject
     friend class RadarArpa;
 
 public:
-    explicit ARPATarget(QObject *parent = 0, RadarEngine *re = nullptr);
+    explicit ARPATarget(QObject *parent = 0, RadarEngine *re = nullptr, int anthene_id = -1);
     ~ARPATarget();
     void RefreshTarget(int dist);
     void SetStatusLost();
@@ -109,7 +111,7 @@ private:
     bool m_check_for_duplicate;
     Polar m_contour[MAX_CONTOUR_LENGTH + 1];
     Polar m_expected;
-
+    int anteneID;
     bool m_automatic;
 
 };

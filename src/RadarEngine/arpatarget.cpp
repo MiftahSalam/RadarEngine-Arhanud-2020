@@ -34,8 +34,8 @@ Polar RadarEngineARND::Pos2Polar(Position p, Position own_ship, int range)
     return pol;
 }
 
-ARPATarget::ARPATarget(QObject *parent, RadarEngine *re) :
-    QObject(parent),m_ri(re)
+ARPATarget::ARPATarget(QObject *parent, RadarEngine *re, int anthene_id) :
+    QObject(parent),m_ri(re),anteneID(anthene_id)
 {
     //    if(!checkHddId())
     //        exit(1);
@@ -58,6 +58,7 @@ ARPATarget::ARPATarget(QObject *parent, RadarEngine *re) :
     m_speeds.nr = 0;
     m_pass1_result = UNKNOWN;
     m_pass_nr = PASS1;
+    m_target_number = 0;
 }
 
 ARPATarget::~ARPATarget()
@@ -74,9 +75,9 @@ bool ARPATarget::Pix(int ang, int rad)
         return false;
 
     if (m_check_for_duplicate)        // check bit 1
-        return ((m_ri->m_history[MOD_ROTATION2048(ang)][antena_switch].line[rad] & 64) != 0);
+        return ((m_ri->m_history[MOD_ROTATION2048(ang)][anteneID].line[rad] & 64) != 0);
     else        // check bit 0
-        return ((m_ri->m_history[MOD_ROTATION2048(ang)][antena_switch].line[rad] & 128) != 0);
+        return ((m_ri->m_history[MOD_ROTATION2048(ang)][anteneID].line[rad] & 128) != 0);
 
 }
 bool ARPATarget::FindContourFromInside(Polar* pol)
@@ -215,7 +216,7 @@ bool ARPATarget::MultiPix(int ang, int rad)
     for (int a = min_angle.angle; a <= max_angle.angle; a++)
     {
         for (int r = min_r.r; r <= max_r.r; r++)
-            m_ri->m_history[MOD_ROTATION2048(a)][antena_switch].line[r] &= 63;
+            m_ri->m_history[MOD_ROTATION2048(a)][anteneID].line[r] &= 63;
 
     }
     return false;
@@ -238,6 +239,7 @@ void ARPATarget::SetStatusLost()
     }
     m_status = LOST;
     m_target_id = 0;
+    m_target_number = 0;
     m_automatic = false;
     m_time_future = 0;
     m_refresh = 0;
@@ -334,7 +336,7 @@ void ARPATarget::ResetPixels()
     {
         if (r >= LINES_PER_ROTATION || r < 0) continue;
         for (int a = m_min_angle.angle - DISTANCE_BETWEEN_TARGETS; a <= m_max_angle.angle + DISTANCE_BETWEEN_TARGETS; a++)
-            m_ri->m_history[MOD_ROTATION2048(a)][antena_switch].line[r] = m_ri->m_history[MOD_ROTATION2048(a)][antena_switch].line[r] & 127;
+            m_ri->m_history[MOD_ROTATION2048(a)][anteneID].line[r] = m_ri->m_history[MOD_ROTATION2048(a)][anteneID].line[r] & 127;
     }
 }
 
@@ -391,24 +393,24 @@ void ARPATarget::RefreshTarget(int dist)
 
 
 
-    quint64 time1 = m_ri->m_history[MOD_ROTATION2048(pol.angle)][antena_switch].time;
+    quint64 time1 = m_ri->m_history[MOD_ROTATION2048(pol.angle)][anteneID].time;
     int margin = SCAN_MARGIN;
     if (m_pass_nr == PASS2)
     {
         margin += 100;
 //        qDebug()<<Q_FUNC_INFO<<"try pass2";
     }
-    quint64 time2 = m_ri->m_history[MOD_ROTATION2048(pol.angle + margin)][antena_switch].time;
+    quint64 time2 = m_ri->m_history[MOD_ROTATION2048(pol.angle + margin)][anteneID].time;
     if ((time1 < (m_refresh + SCAN_MARGIN2) || time2 < time1) && m_status != 0)
     {
         quint64 now = QDateTime::currentDateTimeUtc().toMSecsSinceEpoch();  // millis
         int diff = now - m_refresh;
-        if (diff > 8000)
+        if (diff > 40000)
         {
             qDebug()<<"target not refreshed, missing spokes, set lost, status="<<m_status<<", target_id="<<m_target_id<<" timediff="<<diff;
             SetStatusLost();
         }
-        else if ((diff < 8000) && (diff > 4000))
+        else if ((diff < 40000) && (diff > 20000))
         {
             /*arpa future pos prediction
             */
@@ -472,7 +474,7 @@ void ARPATarget::RefreshTarget(int dist)
             }
 
         }
-        else if(diff < 4000)
+        else if(diff < 20000)
         {
             m_time_future = now;
             m_max_angle_future = m_max_angle;
@@ -552,8 +554,8 @@ void ARPATarget::RefreshTarget(int dist)
         {
             // as this is the first measurement, move target to measured position
             Position p_own;
-            p_own.lat = m_ri->m_history[MOD_ROTATION2048(pol.angle)][antena_switch].lat;  // get the position at receive time
-            p_own.lon = m_ri->m_history[MOD_ROTATION2048(pol.angle)][antena_switch].lon;
+            p_own.lat = m_ri->m_history[MOD_ROTATION2048(pol.angle)][anteneID].lat;  // get the position at receive time
+            p_own.lon = m_ri->m_history[MOD_ROTATION2048(pol.angle)][anteneID].lon;
             m_position = Polar2Pos(pol, p_own, m_range);  // using own ship location from the time of reception
             m_position.dlat_dt = 0.;
             m_position.dlon_dt = 0.;
@@ -847,7 +849,7 @@ int ARPATarget::GetContour(Polar* pol)
         pol->angle -= LINES_PER_ROTATION;
 
     pol->r = (m_max_r.r + m_min_r.r) / 2; //av radius of centroid
-    pol->time = m_ri->m_history[MOD_ROTATION2048(pol->angle)][antena_switch].time;
+    pol->time = m_ri->m_history[MOD_ROTATION2048(pol->angle)][anteneID].time;
     return 0;  //  succes, blob found
 }
 
