@@ -478,16 +478,17 @@ void RadarEngine::trigger_ReqRadarSetting()
     ResetSpokes();
     radarReceive->exitReq();
     sleep(1);
-    radarTransmit->setMulticastData(radar_settings.ip_command,radar_settings.port_command);
 
     switch (radarId) {
     case 0:
         radarReceive->setMulticastData(radar_settings.ip_data,radar_settings.port_data);
         radarReceive->setMulticastReport(radar_settings.ip_report,radar_settings.port_report);
+        radarTransmit->setMulticastData(radar_settings.ip_command,radar_settings.port_command);
         break;
     case 1:
         radarReceive->setMulticastData(radar_settings.ip_data1,radar_settings.port_data1);
         radarReceive->setMulticastReport(radar_settings.ip_report1,radar_settings.port_report1);
+        radarTransmit->setMulticastData(radar_settings.ip_command1,radar_settings.port_command1);
         break;
     default:
         break;
