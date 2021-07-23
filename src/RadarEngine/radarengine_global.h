@@ -240,7 +240,9 @@ struct MqttSettings
 struct AnteneSwitchSettings
 {
     QString ip;
+    QString ip2;
     uint port;
+    uint port2;
 };
 struct ADSBSettings
 {
@@ -376,5 +378,7 @@ extern bool hdg_auto;
 extern int antena_switch;
 extern int cur_zoom_lvl;
 extern int track_counter;
+
+extern RadarState decideRadarState(const RadarState state1, const RadarState state2);
 
 #endif // RADARENGINE_GLOBAL_H

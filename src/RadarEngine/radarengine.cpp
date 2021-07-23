@@ -48,6 +48,18 @@ enum {
     TRAIL_ARRAY_SIZE
 };
 
+RadarState decideRadarState(const RadarState state1, const RadarState state2)
+{
+    RadarState cur_radar_state;
+
+    if(state1 == RADAR_TRANSMIT || state2 == RADAR_TRANSMIT) cur_radar_state = RADAR_TRANSMIT;
+    else if(state1 == RADAR_STANDBY && state2 == RADAR_STANDBY) cur_radar_state = RADAR_STANDBY;
+    else if(state1 == RADAR_WAKING_UP || state2 == RADAR_WAKING_UP) cur_radar_state = RADAR_WAKING_UP;
+    else if(state1 == RADAR_OFF && state2 == RADAR_OFF) cur_radar_state = RADAR_OFF;
+
+    return cur_radar_state;
+}
+
 RadarEngine::RadarEngine(QObject *parent, int id):
     QObject(parent), radarId(id)
 {
