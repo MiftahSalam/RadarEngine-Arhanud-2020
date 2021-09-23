@@ -22,6 +22,7 @@ ProxySetting proxy_settings;
 TrailSettings trail_settings;
 MTISettings mti_settings;
 QDateTime cur_elapsed_time;
+QSet<QString> friendListCode;
 double currentOwnShipLat;
 double currentOwnShipLon;
 double currentHeading;
@@ -157,11 +158,12 @@ void RadarEngine::timerTimeout()
         emit signal_forceExit();
     }
 
-    RadarState *cur_radar_state = radarId ? &state_radar1 : &state_radar;
+//    RadarState *cur_radar_state = radarId ? &state_radar1 : &state_radar;
     qDebug()<<Q_FUNC_INFO<<"state_radar"<<(int)state_radar<<"state_radar1"<<(int)state_radar1;
+    qDebug()<<Q_FUNC_INFO<<"state_radar addrs"<<&state_radar<<"state_radar1 addrs"<<&state_radar1;
 
 
-
+    /*
     if(state_radar == RADAR_STANDBY && state_radar1 == RADAR_STANDBY)
         ResetSpokes();
 
@@ -179,28 +181,29 @@ void RadarEngine::timerTimeout()
         *cur_radar_state = RADAR_OFF;
         ResetSpokes();
     }
+    */
 
 
-
-//    if(state_radar == RADAR_TRANSMIT && TIMED_OUT(now,stay_alive_timeout))
-//    {
-//        emit signal_stay_alive();
-//        stay_alive_timeout = now + STAYALIVE_TIMEOUT;
-//    }
-//    if(((state_radar == RADAR_STANDBY) | (state_radar == RADAR_TRANSMIT)) && TIMED_OUT(now,radar_timeout))
-//    {
-//        state_radar = RADAR_OFF;
-//        ResetSpokes();
-//    }
+//    RadarState cur_radar_state = state_radar;
+    if(state_radar == RADAR_TRANSMIT && TIMED_OUT(now,stay_alive_timeout))
+    {
+        emit signal_stay_alive();
+        stay_alive_timeout = now + STAYALIVE_TIMEOUT;
+    }
+    if(((state_radar == RADAR_STANDBY) | (state_radar == RADAR_TRANSMIT)) && TIMED_OUT(now,radar_timeout))
+    {
+        state_radar = RADAR_OFF;
+        ResetSpokes();
+    }
 
 //    state_radar = RADAR_STANDBY; //temporary
 //    state_radar = RADAR_TRANSMIT; //temporary
 
-//    if(cur_radar_state != state_radar)
-//    {
-//        cur_radar_state = state_radar;
-//        emit signal_state_change();
-//    }
+    if(cur_radar_state != state_radar)
+    {
+        cur_radar_state = state_radar;
+        emit signal_state_change();
+    }
 
     if(old_draw_trails != trail_settings.enable)
     {
@@ -235,6 +238,7 @@ void RadarEngine::radarReceive_ProcessRadarSpoke(int angle_raw, QByteArray data,
 //    state_radar = RADAR_TRANSMIT; //need for offline mode
 
 
+//    RadarState *cur_radar_state = &state_radar;
     RadarState *cur_radar_state = radarId ? &state_radar1 : &state_radar;
     *cur_radar_state = RADAR_TRANSMIT;
 
@@ -248,7 +252,7 @@ void RadarEngine::radarReceive_ProcessRadarSpoke(int angle_raw, QByteArray data,
     quint8 *raw_data = (quint8*)data.data();
     memset(raw_data_proj,0,dataSize);
 
-    raw_data[RETURNS_PER_LINE - 1] = 200;  //  range ring, for testing
+//    raw_data[RETURNS_PER_LINE - 1] = 200;  //  range ring, for testing
 
     const int CUR_ANTENA = antena_switch;
 
@@ -475,9 +479,9 @@ void RadarEngine::ComputeTargetTrails()
     }
 }
 
-void RadarEngine::trigger_ReqRangeChange(int range)
+void RadarEngine::trigger_ReqRangeChange(int rId, int range)
 {
-    radarTransmit->setRange(range);
+    if(rId == radarId) radarTransmit->setRange(range);
 }
 
 void RadarEngine::trigger_clearTrail()
@@ -522,7 +526,7 @@ void RadarEngine::checkRange(int new_range)
     if ((m_range_meters != (uint)new_range))
     {
         m_range_meters = new_range;
-        emit signal_range_change(new_range/10);
+        emit signal_range_change(radarId,new_range/10);
         ResetSpokes();
         qDebug()<<Q_FUNC_INFO<<"detected spoke range change from "<<m_range_meters<<" to "<<new_range;
     }
@@ -532,12 +536,14 @@ void RadarEngine::receiveThread_Report(quint8 report_type, quint8 report_field, 
 {
     quint64 now = QDateTime::currentMSecsSinceEpoch();
     radar_timeout = now + WATCHDOG_TIMEOUT;
+//    RadarState *cur_radar_state = &state_radar;
     RadarState *cur_radar_state = radarId ? &state_radar1 : &state_radar;
 
 //    qDebug()<<Q_FUNC_INFO;
     switch (report_type)
     {
     case RADAR_STATE:
+//        if(radarId == 0)
         *cur_radar_state = (RadarState)report_field;
         if(*cur_radar_state == RADAR_TRANSMIT && TIMED_OUT(now,data_timeout))
         {
@@ -546,7 +552,9 @@ void RadarEngine::receiveThread_Report(quint8 report_type, quint8 report_field, 
             ResetSpokes();
         }
 
-//        qDebug()<<Q_FUNC_INFO<<"report status"<<state_radar;
+        if(!radarId) filter.wakingup_time = static_cast<quint8>(value);
+
+        qDebug()<<Q_FUNC_INFO<<"report status radar"<<radarId<<(RadarState)report_field;
         break;
     case RADAR_FILTER:
         switch (report_field)

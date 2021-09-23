@@ -173,6 +173,7 @@ struct ReportFilter
     quint8 targetBoost;
     quint8 LInterference;
     quint8 targetExpan;
+    quint8 wakingup_time;
     quint32 range;
 };
 struct ReportAlign
@@ -370,6 +371,7 @@ extern ProxySetting proxy_settings;
 extern TrailSettings trail_settings;
 extern MTISettings mti_settings;
 extern QDateTime cur_elapsed_time;
+extern QSet<QString> friendListCode;
 extern double currentOwnShipLat;
 extern double currentOwnShipLon;
 extern double currentHeading;

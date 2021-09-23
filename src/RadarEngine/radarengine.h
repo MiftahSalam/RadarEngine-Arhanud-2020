@@ -44,7 +44,7 @@ public:
 signals:
     void signal_updateReport();
     void signal_plotRadarSpoke(int angle, u_int8_t* data, size_t len);
-    void signal_range_change(int range);
+    void signal_range_change(int rId, int range);
     void signal_stay_alive();
     void signal_sendTx();
     void signal_sendStby();
@@ -58,7 +58,7 @@ private slots:
     void trigger_ReqRadarSetting();
     void timerTimeout();
     void trigger_clearTrail();
-    void trigger_ReqRangeChange(int range);
+    void trigger_ReqRangeChange(int rId,int range);
     void trigger_ReqControlChange(int ct,int val);
     void trigger_ReqTx();
 

@@ -14,7 +14,8 @@ struct RadarReport_01C4_18
     quint8 field5;               // 5
     quint16 field6;              // 6-7
     quint16 field8;              // 8-9
-    quint16 field10;             // 10-11
+    quint16 waking_time;             // 10 //waking up time
+    quint16 field11;             // 11
 };
 struct RadarReport_02C4_99
 {     // length 99
@@ -284,7 +285,7 @@ void RadarReceive::processReport(QByteArray data, int len)
                     emit updateReport(0,2,0);
                     break;
                 case 0x03:
-                    emit updateReport(0,3,0);
+                    emit updateReport(0,3,s->waking_time);
                     break;
                 default:
                     break;
