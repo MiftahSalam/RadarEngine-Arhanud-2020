@@ -229,8 +229,10 @@ struct ProxySetting{
 struct IFFSettings
 {
     bool show_track;
-    QString ip;
-    uint port;
+    QString ip1;
+    uint port1;
+    QString ip2;
+    uint port2;
 };
 struct MqttSettings
 {
