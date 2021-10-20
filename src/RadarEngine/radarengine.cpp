@@ -23,11 +23,14 @@ TrailSettings trail_settings;
 MTISettings mti_settings;
 QDateTime cur_elapsed_time;
 QSet<QString> friendListCode;
+QSet<QString> hostileListCode;
+GPSStatus gps_status;
 double currentOwnShipLat;
 double currentOwnShipLon;
 double currentHeading;
 bool gps_auto;
 bool hdg_auto;
+bool first_sweep;
 int antena_switch;
 int cur_zoom_lvl;
 int track_counter;
@@ -392,7 +395,7 @@ void RadarEngine::ComputeColourMap()
     for (int i = 0; i < BLOB_COLOURS; i++)
         m_colour_map_rgb[i] = QColor(0, 0, 0);
 
-    QColor color = radarId ? QColor(0, 255, 0) : QColor(0, 150, 0);
+    QColor color = radarId ? QColor(0, 150, 0) : QColor(0, 255, 0);
 
     m_colour_map_rgb[BLOB_STRONG] = color;
     m_colour_map_rgb[BLOB_INTERMEDIATE] = color;

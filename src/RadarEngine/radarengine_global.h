@@ -191,10 +191,12 @@ struct ReportScanSignal
 };
 struct RadarSettings
 {
+    bool power_on;
     bool op_mode;
     bool show_rings;
     bool headingUp;
     bool show_compass;
+    bool show_sweep;
     bool show_heading_marker;
     int last_scale;
     bool enable;
@@ -336,7 +338,15 @@ struct MTISettings
     bool enable;
     quint8 threshold;
 };
-
+struct GPSStatus
+{
+    bool gps_valid;
+    bool gps_online;
+    bool hdt_valid;
+    bool hdt_online;
+};
+/*
+*/
 static const QList<int> distanceList = QList<int>()<<5000000 //0
                                                   <<2000000 //1
                                                  <<1000000 //2
@@ -355,6 +365,19 @@ static const QList<int> distanceList = QList<int>()<<5000000 //0
                                     <<200 //15
                                    <<100 //16
                                   <<50; //17
+/*
+static const QList<int> distanceList = QList<int>()<<100000 //0
+                                            <<75000 //1
+                                           <<50000 //2
+                                          <<30000 //3
+                                         <<20000 //4
+                                        <<10000 //5
+                                       <<5000 //6
+                                      <<2000 //7
+                                     <<1000 //8
+                                    <<500 //9
+                                    ;
+*/
 
 
 extern RadarState state_radar;
@@ -374,11 +397,14 @@ extern TrailSettings trail_settings;
 extern MTISettings mti_settings;
 extern QDateTime cur_elapsed_time;
 extern QSet<QString> friendListCode;
+extern QSet<QString> hostileListCode;
+extern GPSStatus gps_status;
 extern double currentOwnShipLat;
 extern double currentOwnShipLon;
 extern double currentHeading;
 extern bool gps_auto;
 extern bool hdg_auto;
+extern bool first_sweep;
 extern int antena_switch;
 extern int cur_zoom_lvl;
 extern int track_counter;

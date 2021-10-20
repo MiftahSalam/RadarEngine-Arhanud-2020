@@ -411,7 +411,7 @@ void RadarReceive::processFrame(QByteArray data, int len)
         int angle_raw = 0;
         angle_raw = (line->br4g.angle[1] << 8) | line->br4g.angle[0];
 
-
+        /*
         if(m_engine->radarId == radarIdRef)
         {
             if(angle_raw == 1024)
@@ -423,6 +423,7 @@ void RadarReceive::processFrame(QByteArray data, int len)
                 emit signal_changeAntena("0");
             }
         }
+        */
 
         const char *data_p = (const char *)line->data;
         QByteArray raw_data = QByteArray(data_p,512);
