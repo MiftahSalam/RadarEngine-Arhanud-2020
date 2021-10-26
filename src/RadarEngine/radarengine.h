@@ -41,6 +41,8 @@ public:
     RadarArpa *radarArpa[ANTENE_COUNT];
     int radarId;
 
+    uint getCurrentRadarRange() const { return m_range_meters; }
+
 signals:
     void signal_updateReport();
     void signal_plotRadarSpoke(int angle, u_int8_t* data, size_t len);

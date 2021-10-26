@@ -6,10 +6,10 @@
 #include "radarengine_global.h"
 #include "kalmanfilter.h"
 
-#define SCAN_MARGIN (750)
-//#define SCAN_MARGIN (150)
-#define SCAN_MARGIN2 (5000)
-//#define SCAN_MARGIN2 (1000)
+//#define SCAN_MARGIN (750)
+#define SCAN_MARGIN (150)
+//#define SCAN_MARGIN2 (5000)
+#define SCAN_MARGIN2 (1000)
 
 #define MAX_NUMBER_OF_TARGETS (200)
 #define MAX_CONTOUR_LENGTH (601)

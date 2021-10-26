@@ -262,7 +262,7 @@ void RadarArpa::AcquireNewMARPATarget(Position p)
 }
 void RadarArpa::AcquireOrDeleteMarpaTarget(Position target_pos, int status)
 {
-    //    qDebug()<<Q_FUNC_INFO<<target_pos.lat<<target_pos.lon<<m_number_of_targets;
+        qDebug()<<Q_FUNC_INFO<<"radar id"<<m_ri->radarId<<target_pos.lat<<target_pos.lon<<m_number_of_targets;
     int i_target;
     if (m_number_of_targets < MAX_NUMBER_OF_TARGETS - 1 ||
             (m_number_of_targets == MAX_NUMBER_OF_TARGETS - 1 && status == FOR_DELETION))

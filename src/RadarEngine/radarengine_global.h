@@ -346,7 +346,6 @@ struct GPSStatus
     bool hdt_online;
 };
 /*
-*/
 static const QList<int> distanceList = QList<int>()<<5000000 //0
                                                   <<2000000 //1
                                                  <<1000000 //2
@@ -365,7 +364,8 @@ static const QList<int> distanceList = QList<int>()<<5000000 //0
                                     <<200 //15
                                    <<100 //16
                                   <<50; //17
-/*
+*/
+
 static const QList<int> distanceList = QList<int>()<<100000 //0
                                             <<75000 //1
                                            <<50000 //2
@@ -377,7 +377,7 @@ static const QList<int> distanceList = QList<int>()<<100000 //0
                                      <<1000 //8
                                     <<500 //9
                                     ;
-*/
+
 
 
 extern RadarState state_radar;

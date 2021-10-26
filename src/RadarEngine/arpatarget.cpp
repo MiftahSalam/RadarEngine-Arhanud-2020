@@ -224,7 +224,7 @@ bool ARPATarget::MultiPix(int ang, int rad)
 
 void ARPATarget::SetStatusLost()
 {
-    qDebug()<<Q_FUNC_INFO;
+    qDebug()<<Q_FUNC_INFO<<"radar id"<<m_ri->radarId<<"id"<<m_target_id;
     m_contour_length = 0;
     m_lost_count = 0;
     if (m_kalman)         // reset kalman filter, don't delete it, too  expensive
@@ -564,7 +564,7 @@ void ARPATarget::RefreshTarget(int dist)
         }
 
         m_status++;
-        //        qDebug()<<Q_FUNC_INFO<<"track status"<<m_status;
+        qDebug()<<Q_FUNC_INFO<<"radar id"<<m_ri->radarId<<"track status"<<m_status;
         if(m_status > 10)
             m_status = 10;
         // target gets an id when status  == STATUS_TO_OCPN
@@ -632,7 +632,7 @@ void ARPATarget::RefreshTarget(int dist)
         m_lost_count++;
 
         // delete if not found too often
-        qDebug()<<Q_FUNC_INFO<<"id"<<m_target_id<<"m_lost_count"<<m_lost_count<<"antena_switch"<<antena_switch;
+        qDebug()<<Q_FUNC_INFO<<"radar id"<<m_ri->radarId<<"id"<<m_target_id<<"m_lost_count"<<m_lost_count<<"antena_switch"<<antena_switch;
         if (m_lost_count > MAX_LOST_COUNT)
         {
             qDebug()<<Q_FUNC_INFO<<"not found often";
@@ -672,7 +672,15 @@ void ARPATarget::RefreshTarget(int dist)
 
         qDebug()<<Q_FUNC_INFO<<"calculate hight target: id"<<m_target_id<<"m_lost_count"<<m_lost_count<<"antena_switch"<<antena_switch;
         if(m_lost_count == 0)
+        {
             m_position.alt = m_position.rng*rad_proj[antena_switch]*1000.;
+
+            if(m_position.alt > 8000.)
+            {
+                qDebug()<<Q_FUNC_INFO<<"radar id"<<m_ri->radarId<<"antena_switch"<<antena_switch<<"m_target_id"<<m_target_id<<"target alt too hight: "<<m_position.alt;
+                m_status = LOST;
+            }
+        }
 
 
     }
