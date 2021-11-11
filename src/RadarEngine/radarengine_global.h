@@ -31,6 +31,7 @@
 #define RADAR_ENGINE_ARND_VERSION_CHECK(major, minor, patch) ((major<<16)|(minor<<8)|(patch))
 
 #define ANTENE_COUNT (3) //3 antena
+//#define ANTENE_COUNT (1) //tes 1 antena
 
 #define RETURNS_PER_LINE (512)
 #define SPOKES (4096)
@@ -248,6 +249,7 @@ struct AnteneSwitchSettings
     QString ip2;
     uint port;
     uint port2;
+    bool enable;
 };
 struct ADSBSettings
 {
@@ -367,16 +369,17 @@ static const QList<int> distanceList = QList<int>()<<5000000 //0
 */
 
 static const QList<int> distanceList = QList<int>()<<100000 //0
-                                            <<75000 //1
-                                           <<50000 //2
-                                          <<30000 //3
-                                         <<20000 //4
-                                        <<10000 //5
-                                       <<5000 //6
-                                      <<2000 //7
-                                     <<1000 //8
-                                    <<500 //9
-                                    ;
+                                                  <<75000 //1
+                                                 <<50000 //2
+                                                <<30000 //3
+                                               <<20000 //4
+                                              <<10000 //5
+                                             <<5000 //6
+                                            <<2000 //7
+                                           <<1500 //8
+                                          <<1000 //9
+                                         <<500 //10
+                                           ;
 
 
 

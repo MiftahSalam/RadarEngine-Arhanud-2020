@@ -26,6 +26,7 @@ P2CLookupTable* GetP2CLookupTable()
                 lookupTable->y[arc][radius] = (GLfloat)radius * sine/RETURNS_PER_LINE;
                 lookupTable->intx[arc][radius] = (int)(lookupTable->x[arc][radius]*RETURNS_PER_LINE);
                 lookupTable->inty[arc][radius] = (int)(lookupTable->y[arc][radius]*RETURNS_PER_LINE);
+//                qDebug()<<Q_FUNC_INFO<<"arc"<<arc<<"rad"<<radius<<"x"<<lookupTable->intx[arc][radius]<<"y"<<lookupTable->inty[arc][radius];
             }
         }
     }

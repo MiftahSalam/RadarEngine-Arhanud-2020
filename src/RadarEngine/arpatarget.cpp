@@ -343,19 +343,20 @@ void ARPATarget::ResetPixels()
 QPointF ARPATarget::blobPixelPosition()
 {
     double y_max = currentOwnShipLat +
-            (double)m_max_r_future.r / (double)RETURNS_PER_LINE * m_range * cos(deg2rad(SCALE_RAW_TO_DEGREES2048(m_max_angle_future.angle))) / 60. / 1852.;
+            (double)m_max_r.r / (double)RETURNS_PER_LINE * m_range * cos(deg2rad(SCALE_RAW_TO_DEGREES2048(m_max_angle.angle))) / 60. / 1852.;
     double x_max = currentOwnShipLon +
-            (double)m_max_r_future.r / (double)RETURNS_PER_LINE * m_range * sin(deg2rad(SCALE_RAW_TO_DEGREES2048(m_max_angle_future.angle))) /
+            (double)m_max_r.r / (double)RETURNS_PER_LINE * m_range * sin(deg2rad(SCALE_RAW_TO_DEGREES2048(m_max_angle.angle))) /
             cos(deg2rad(currentOwnShipLat)) / 60. / 1852.;
 
     double y_min = currentOwnShipLat +
-            (double)m_min_r_future.r / (double)RETURNS_PER_LINE * m_range * cos(deg2rad(SCALE_RAW_TO_DEGREES2048(m_min_angle_future.angle))) / 60. / 1852.;
+            (double)m_min_r.r / (double)RETURNS_PER_LINE * m_range * cos(deg2rad(SCALE_RAW_TO_DEGREES2048(m_min_angle.angle))) / 60. / 1852.;
     double x_min = currentOwnShipLon +
-            (double)m_min_r_future.r / (double)RETURNS_PER_LINE * m_range * sin(deg2rad(SCALE_RAW_TO_DEGREES2048(m_min_angle_future.angle))) /
+            (double)m_min_r.r / (double)RETURNS_PER_LINE * m_range * sin(deg2rad(SCALE_RAW_TO_DEGREES2048(m_min_angle.angle))) /
             cos(deg2rad(currentOwnShipLat)) / 60. / 1852.;
     double x_avg = (x_min+x_max)/2;
     double y_avg = (y_max+y_min)/2;
 
+    qDebug()<<Q_FUNC_INFO<<"rId"<<m_ri->radarId<<"antId"<<anteneID<<"m_range"<<m_range<<"id"<<m_target_id<<"m_max_r"<<m_max_r.r<<"m_min_r"<<m_min_r.r;
     return QPointF(x_avg,y_avg);
 }
 
@@ -493,6 +494,7 @@ void ARPATarget::RefreshTarget(int dist)
 
     // PREDICTION CYCLE
     m_position.time = time1;                                                // estimated new target time
+//    delta_t = ((double)((m_position.time - prev_X.time))) / 1.;  //tes
     delta_t = ((double)((m_position.time - prev_X.time))) / 1000.;  // in seconds
     //    qDebug()<<Q_FUNC_INFO<<"m_pos time"<<m_position.time<<"prev time"<<prev_X.time;
     if (m_status == 0)
@@ -658,7 +660,7 @@ void ARPATarget::RefreshTarget(int dist)
         dif_lat =  dif_lat - (currentOwnShipLat*M_PI/180.);
 
         m_position.rng = sqrt(dif_lat * dif_lat + dif_lon * dif_lon)*R;
-        m_position.rng *= 1.5;
+//        m_position.rng *= 1.5;
         qreal bearing = atan2(dif_lon,dif_lat)*180./M_PI;
 
         while(bearing < 0.0)
@@ -666,6 +668,7 @@ void ARPATarget::RefreshTarget(int dist)
             bearing += 360.0;
         }
 
+//        static const float rad_proj[ANTENE_COUNT] = { sin(M_PI/18.0) };
         static const float rad_proj[ANTENE_COUNT] = { sin(M_PI/18.0), sin(M_PI/9.), sin(M_PI/6.)};
 
         m_position.brn = bearing;
@@ -678,7 +681,8 @@ void ARPATarget::RefreshTarget(int dist)
             if(m_position.alt > 8000.)
             {
                 qDebug()<<Q_FUNC_INFO<<"radar id"<<m_ri->radarId<<"antena_switch"<<antena_switch<<"m_target_id"<<m_target_id<<"target alt too hight: "<<m_position.alt;
-                m_status = LOST;
+//                m_status = LOST;
+                m_position.alt = 8000.0 -( double)(rand()%1000 + 100);
             }
         }
 
@@ -746,6 +750,8 @@ int ARPATarget::GetContour(Polar* pol)
 
     transl[3].angle = -1;
     transl[3].r = 0;
+
+    int const MAX_BREAK_FIND_COUNTOUR_ANGLE = 3*LINES_PER_ROTATION; //tambahan
 
     int count = 0;
     Polar start = *pol;
@@ -838,6 +844,8 @@ int ARPATarget::GetContour(Polar* pol)
         if (current.r < m_min_r.r)
             m_min_r = current;
 
+        if(current.angle > MAX_BREAK_FIND_COUNTOUR_ANGLE)
+            break;
     }
     m_contour_length = count;
     //  CalculateCentroid(*target);    we better use the real centroid instead of the average, todo

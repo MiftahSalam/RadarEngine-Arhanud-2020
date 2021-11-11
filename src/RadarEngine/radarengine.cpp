@@ -84,8 +84,9 @@ RadarEngine::RadarEngine(QObject *parent, int id):
 
     raw_data_proj = new quint8 [RETURNS_PER_LINE];
 
-    const float rad_proj[ANTENE_COUNT] = { 1., 1., 1.}; //tes
-//    const float rad_proj[ANTENE_COUNT] = { 1., cos(M_PI/9.0), cos(M_PI/4.5)};
+//    const float rad_proj[ANTENE_COUNT] = { 1.}; //tes
+//    const float rad_proj[ANTENE_COUNT] = { 1., 1., 1.}; //tes
+    const float rad_proj[ANTENE_COUNT] = { 1., cos(M_PI/9.0), cos(M_PI/4.5)};
     for(int antena=0; antena<ANTENE_COUNT; antena++)
     {
         for (int radius = 0; radius < RETURNS_PER_LINE; radius++)
@@ -94,6 +95,70 @@ RadarEngine::RadarEngine(QObject *parent, int id):
         }
     }
 
+    //tes
+    for (int brn = 0; brn < LINES_PER_ROTATION; brn++) {
+        for (int rad = 0; rad < RETURNS_PER_LINE; rad++) {
+            for (int rgb_i = 0; rgb_i < 3; ++rgb_i) {
+                raw_data_vec.append(0);
+            }
+        }
+    }
+    raw_data_vec[0] = 0;
+    raw_data_vec[1] = 0;
+    raw_data_vec[2] = 255;
+    /*
+    for (int var = 0; var < raw_data_vec.size()-3; var++) {
+        if(var%3)
+        {
+            raw_data_vec[var] = 0;
+            raw_data_vec[var+1] = 0;
+            raw_data_vec[var+2] = 0;
+        }
+        else
+        {
+            raw_data_vec[var] = 255;
+            raw_data_vec[var+1] = 255;
+            raw_data_vec[var+2] = 255;
+        }
+    }
+    */
+    /*
+    for (int brn = 0; brn < LINES_PER_ROTATION; brn++) {
+        for (int rad = 0; rad < RETURNS_PER_LINE; rad++) {
+            int cur_raw_data_vec_ptr_x = 2*(511+GetP2CLookupTable()->intx[brn][rad]);
+            int cur_raw_data_vec_ptr_y = 1024*(512-GetP2CLookupTable()->inty[brn][rad]);
+            quint8 raw = 255;
+
+            if(rad%64 && brn%64)
+                raw = 0;
+
+            for (int rgb_i = 0; rgb_i < 3; ++rgb_i) {
+                raw_data_vec[cur_raw_data_vec_ptr_x+cur_raw_data_vec_ptr_y+rgb_i] = raw;
+            }
+
+        }
+    }
+    */
+    /*
+    for (int var = 0; var < 1024; var++) {
+        raw_data_vec.replace(var,255);
+    }
+    for (int var = 524288; var < 524288+300; var++) {
+        raw_data_vec.replace(var,255);
+    }
+    for (int var = 525312; var < 525312+100; var++) {
+        raw_data_vec.replace(var,255);
+    }
+    for (int var = 523776; var < 523776+100; var++) {
+        raw_data_vec.replace(var,255);
+    }
+    for (int var = 786432; var < 786432+200; var++) {
+        raw_data_vec.replace(var,255);
+    }
+    for (int var = 0; var < 20; var++) {
+        raw_data_vec.replace(raw_data_vec.size()-2-var,255);
+    }
+    */
 
     ComputeColourMap();
     ComputeTargetTrails();
@@ -259,6 +324,11 @@ void RadarEngine::radarReceive_ProcessRadarSpoke(int angle_raw, QByteArray data,
 
     const int CUR_ANTENA = antena_switch;
 
+
+    //tes create spoke matrix
+    int cur_raw_data_vec_ptr_x,cur_raw_data_vec_ptr_y;
+
+
     quint8 weakest_normal_blob = 50; //next load from configuration file
     quint8 *hist_data = m_history[bearing][CUR_ANTENA].line;
 
@@ -266,7 +336,6 @@ void RadarEngine::radarReceive_ProcessRadarSpoke(int angle_raw, QByteArray data,
     m_history[bearing][CUR_ANTENA].lat = currentOwnShipLat;
     m_history[bearing][CUR_ANTENA].lon = currentOwnShipLon;
 
-//    int cur_antena = 0; //tes
     for (int radius = 0; radius < data.size(); radius++)
     {
         raw_data_proj[rad_proj_cur[radius][CUR_ANTENA]] = raw_data[radius];
@@ -298,6 +367,13 @@ void RadarEngine::radarReceive_ProcessRadarSpoke(int angle_raw, QByteArray data,
         if(mti_settings.enable)
 //            old_strength_info[bearing][radius] = new_strength_info[bearing][radius];
         old_strength_info[bearing][rad_proj_cur[radius][CUR_ANTENA]] = new_strength_info[bearing][rad_proj_cur[radius][CUR_ANTENA]];
+
+        //tes
+//        cur_raw_data_vec_ptr_x = 2*(511+GetP2CLookupTable()->intx[bearing][radius]);
+//        cur_raw_data_vec_ptr_y = 1024*(512-GetP2CLookupTable()->inty[bearing][radius]);
+//        raw_data_vec[cur_raw_data_vec_ptr_x+cur_raw_data_vec_ptr_y] = raw_data_proj[rad_proj_cur[radius][CUR_ANTENA]];
+//        qDebug()<<Q_FUNC_INFO<<"cur_raw_data_vec_ptr_x"<<cur_raw_data_vec_ptr_x<<"cur_raw_data_vec_ptr_y"<<cur_raw_data_vec_ptr_y<<"total"<<523776+cur_raw_data_vec_ptr_x-cur_raw_data_vec_ptr_y<<"bearing"<<bearing<<"radius"<<radius;
+//        qDebug()<<Q_FUNC_INFO<<"raw_data_vec"<<raw_data_vec[523776+cur_raw_data_vec_ptr_x-cur_raw_data_vec_ptr_y]<<"raw_data"<<raw_data_proj[rad_proj_cur[radius][CUR_ANTENA]];
     }
 
     /*check Guardzone*/

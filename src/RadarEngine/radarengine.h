@@ -42,6 +42,7 @@ public:
     int radarId;
 
     uint getCurrentRadarRange() const { return m_range_meters; }
+    QVector<quint8> getCurrentRawDataVector() const { return raw_data_vec; } //tes
 
 signals:
     void signal_updateReport();
@@ -93,6 +94,7 @@ private:
     int old_trail;
     int rad_proj_cur[RETURNS_PER_LINE][ANTENE_COUNT];
     quint8 *raw_data_proj;
+    QVector<quint8> raw_data_vec; //tes
 
     void ComputeColourMap();
     void ResetSpokes();
